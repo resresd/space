@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.resresd.games</groupId>
+		<artifactId>space-root</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>server</artifactId>
+	<dependencies>
+		<dependency>
+			<groupId>com.github.resresd.games.space-root</groupId>
+			<artifactId>libs</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.joml</groupId>
+			<artifactId>joml</artifactId>
+			<version>${joml.version}</version>
+		</dependency>
+
+	</dependencies>
+	<build>
+		<plugins>
+			<!--JAR -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+
+					<execution>
+						<id>make-My</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase>
+						<configuration>
+							<finalName>${project.artifactId}-${project.version}+git-${git.commit.id.full}</finalName>
+							<archive>
+								<manifest>
+									<mainClass>com.github.resresd.games.resresdspace.server.main.Main</mainClass>
+								</manifest>
+							</archive>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+						</configuration>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!--JAR -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<executable>java</executable>
+					<mainClass>com.github.resresd.games.resresdspace.server.main.Main</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
