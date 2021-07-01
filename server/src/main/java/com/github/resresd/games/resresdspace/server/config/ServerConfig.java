@@ -6,10 +6,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ServerConfig {
-	@Getter
-	@Setter
-	private boolean prepare;
-	@Getter
-	@Setter
-	private NetworkConfig networkConfig = new NetworkConfig();
+
+	private @Getter @Setter boolean prepare;
+
+	private @Getter @Setter NetworkConfig networkConfig = new NetworkConfig();
+
+	private @Getter @Setter AsteroidsConfig asteroidsConfig = new AsteroidsConfig();
+	private @Getter @Setter ShipsConfig shipsConfig = new ShipsConfig();
 }

@@ -22,6 +22,9 @@ import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
+import com.github.resresd.games.resresdspace.server.config.AsteroidsConfig;
+import com.github.resresd.games.resresdspace.server.config.ServerConfig;
+import com.github.resresd.games.resresdspace.server.header.ServerHeader;
 import com.github.resresd.games.resresdspace.server.header.network.NetWorkHeader;
 import com.github.resresd.utils.NumberUtils;
 
@@ -46,8 +49,6 @@ public class ServerEngine extends Thread {
 	private static float shipRadius = 4.0F;
 	private static float maxShotLifetime = 4.0F;
 
-	static float minAsteroidRadius = 1F;
-	static float maxAsteroidRadius = 330F;
 	static int a = 3000;
 	static int b = 210;
 
@@ -57,52 +58,59 @@ public class ServerEngine extends Thread {
 	public void init() {
 		logger.info("init-start");
 
-		for (int i = 0; i < 4000; i++) {
-			logger.info("Ast:" + i);
+		ServerConfig serverConfig = ServerHeader.getServerConfig();
+		AsteroidsConfig asteroidsConfig = serverConfig.getAsteroidsConfig();
+
+		for (int i = 0; i < asteroidsConfig.getCount(); i++) {
+			logger.info("Ast:{}", i);
 			try {
+
+				float minAsteroidRadius = asteroidsConfig.getMinAsteroidRadius();
+				float maxAsteroidRadius = asteroidsConfig.getMaxAsteroidRadius();
+
+				double minX = asteroidsConfig.getMinX();
+				double maxX = asteroidsConfig.getMaxX();
+
+				double minY = asteroidsConfig.getMinY();
+				double maxY = asteroidsConfig.getMaxY();
+
+				double minZ = asteroidsConfig.getMinZ();
+				double maxZ = asteroidsConfig.getMaxZ();
+
 				Asteroid asteroid = new Asteroid();
 				asteroid.setScale(Asteroid.generateSize(minAsteroidRadius, maxAsteroidRadius));
-				asteroid.getPosition().x = NumberUtils.randomDoubleInRange(-10000, 10000);
-				asteroid.getPosition().y = NumberUtils.randomDoubleInRange(-10000, 10000);
-				asteroid.getPosition().z = NumberUtils.randomDoubleInRange(-10000, 10000);
+
+				asteroid.getPosition().x = NumberUtils.randomDoubleInRange(minX, maxX);
+				asteroid.getPosition().y = NumberUtils.randomDoubleInRange(minY, maxY);
+				asteroid.getPosition().z = NumberUtils.randomDoubleInRange(minZ, maxZ);
+
 				localAsteroids.add(asteroid);
-
-				StringBuilder msg = new StringBuilder();
-				msg.append("size:").append(asteroid.getScale());
-				msg.append(" X:").append(asteroid.getPosition().x);
-				msg.append(" Y:").append(asteroid.getPosition().y);
-				msg.append(" Z:").append(asteroid.getPosition().z);
-				logger.info(msg.toString());
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				logger.info("localShips started");
-				while (active) {
-					try {
-						if (localShips.size() > 3) {
-							Thread.sleep(100);
-							continue;
-						}
-						Ship ship = new Ship();
-						ship.setLastShotTime(0);
-						ship.getPosition().x = NumberUtils.randomDoubleInRange(-50, 50);
-						ship.getPosition().y = NumberUtils.randomDoubleInRange(-50, 50);
-						ship.getPosition().z = NumberUtils.randomDoubleInRange(-50, 50);
-
-						NetWorkHeader.sendBroadcast(ship);
-						localShips.add(ship);
-					} catch (Exception e) {
-						e.printStackTrace();
+		new Thread(((Runnable) () -> {
+			logger.info("localShips started");
+			while (active) {
+				try {
+					if (localShips.size() > 3) {
+						Thread.sleep(100);
+						continue;
 					}
-				}
+					Ship ship = new Ship();
+					ship.setLastShotTime(0);
+					ship.getPosition().x = NumberUtils.randomDoubleInRange(-50, 50);
+					ship.getPosition().y = NumberUtils.randomDoubleInRange(-50, 50);
+					ship.getPosition().z = NumberUtils.randomDoubleInRange(-50, 50);
 
+					NetWorkHeader.sendBroadcast(ship);
+					localShips.add(ship);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
-		}, "aaa").start();
+
+		}), "aaa").start();
 
 		logger.info("init-end");
 	}
@@ -141,15 +149,16 @@ public class ServerEngine extends Thread {
 				return;
 			}
 
-			// WTF
-			Vector3f tmp3 = new Vector3f();
-			Vector3f tmp4 = new Vector3f();
-
 			ship.lastShotTime = thisTime;
 
 			if (localShips.size() <= 1) {
 				return;
 			}
+			// WTF
+			Vector3f tmp3 = new Vector3f();
+			Vector3f tmp4 = new Vector3f();
+
+			// TARGET
 			Ship targetShip = localShips.get(NumberUtils.randomIntInRange(0, localShips.size() - 1));
 
 			Vector3d position = targetShip.getPosition();
@@ -159,7 +168,7 @@ public class ServerEngine extends Thread {
 					.negate().normalize().mul(1.01f * shipRadius)
 					.add(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z);
 			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel,
-					StaticData.tmp2);
+					StaticData.usedForNarmal);
 
 			if (icept == null) {
 				return;
@@ -175,9 +184,9 @@ public class ServerEngine extends Thread {
 			Vector4f projectileVelocity = newShot.getProjectileVelocity();
 			if (projectileVelocity.w <= 0.0F) {
 				projectilePosition.set(shotPos);
-				projectileVelocity.x = StaticData.tmp2.x * StaticData.shotVelocity;
-				projectileVelocity.y = StaticData.tmp2.y * StaticData.shotVelocity;
-				projectileVelocity.z = StaticData.tmp2.z * StaticData.shotVelocity;
+				projectileVelocity.x = StaticData.usedForNarmal.x * StaticData.shotVelocity;
+				projectileVelocity.y = StaticData.usedForNarmal.y * StaticData.shotVelocity;
+				projectileVelocity.z = StaticData.usedForNarmal.z * StaticData.shotVelocity;
 				projectileVelocity.w = 0.01f;
 			}
 			directShots.add(newShot);
@@ -225,7 +234,7 @@ public class ServerEngine extends Thread {
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
 						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
 								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmp,
-								StaticData.tmp2)) {
+								StaticData.usedForNarmal)) {
 
 					if (ship.damage(1.0D)) {
 						localShips.remove(ship);
@@ -237,7 +246,7 @@ public class ServerEngine extends Thread {
 					}
 
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setP(tmp);
+					emitExplosionPacket.setPosition(tmp);
 					emitExplosionPacket.setNormal(null);
 					NetWorkHeader.sendBroadcast(emitExplosionPacket);
 
@@ -255,11 +264,11 @@ public class ServerEngine extends Thread {
 						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)
 						&& narrowphase(asteroidMesh.positions, asteroid2.getPosition().x, asteroid2.getPosition().y,
 								asteroid2.getPosition().z, asteroid2.scale, projectilePosition, newPosition, tmp,
-								StaticData.tmp2)) {
+								StaticData.usedForNarmal)) {
 
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setP(tmp);
-					emitExplosionPacket.setNormal(StaticData.tmp2);// FIXME
+					emitExplosionPacket.setPosition(tmp);
+					emitExplosionPacket.setNormal(StaticData.usedForNarmal);// FIXME
 					NetWorkHeader.sendBroadcast(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;

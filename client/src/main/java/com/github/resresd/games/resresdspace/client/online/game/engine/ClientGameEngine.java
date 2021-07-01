@@ -263,7 +263,7 @@ public class ClientGameEngine {
 				debugProc.free();
 			}
 			GameHeader.getKeyCallback().free();
-			GameHeader.getControlHeader().getMouseHeader().getCpCallback().free();
+			MouseHeader.getCpCallback().free();
 			MouseHeader.getMbCallback().free();
 			GameHeader.getFbCallback().free();
 			wsCallback.free();
@@ -304,7 +304,6 @@ public class ClientGameEngine {
 		}
 		glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR));
 
-		// TODO CREATE CALLBACKS
 		GameControl.createCallbacks(WindowHeader.getWindow());
 
 		glfwSetWindowSizeCallback(WindowHeader.getWindow(), wsCallback = new GLFWWindowSizeCallback() {
@@ -507,12 +506,13 @@ public class ClientGameEngine {
 
 			//
 			invViewProjMatrix
-					.transformProject(StaticData.tmp2.set(MouseHeader.getMouseX(), -MouseHeader.getMouseY(), 1.0F))
+					.transformProject(
+							StaticData.usedForNarmal.set(MouseHeader.getMouseX(), -MouseHeader.getMouseY(), 1.0F))
 					.normalize();
 			if (shotVel.w <= 0.0F) {
-				shotVel.x = GameHeader.camera.linearVel.x + StaticData.tmp2.x * shotVelocity;
-				shotVel.y = GameHeader.camera.linearVel.y + StaticData.tmp2.y * shotVelocity;
-				shotVel.z = GameHeader.camera.linearVel.z + StaticData.tmp2.z * shotVelocity;
+				shotVel.x = GameHeader.camera.linearVel.x + StaticData.usedForNarmal.x * shotVelocity;
+				shotVel.y = GameHeader.camera.linearVel.y + StaticData.usedForNarmal.y * shotVelocity;
+				shotVel.z = GameHeader.camera.linearVel.z + StaticData.usedForNarmal.z * shotVelocity;
 				shotVel.w = 0.01f;
 				if (!firstShot) {
 					shotPosition.set(GameHeader.camera.right(tmp3)).mul(shotSeparation).add(GameHeader.camera.position);
@@ -572,19 +572,25 @@ public class ClientGameEngine {
 				float z = (float) (particlePosition.z - GameHeader.camera.position.z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = (float) particleVelocity.w;
-					viewMatrix.transformPosition(StaticData.tmp2.set(x, y, z));
-					particleVertices.put(StaticData.tmp2.x - particleSize).put(StaticData.tmp2.y - particleSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(-1);
-					particleVertices.put(StaticData.tmp2.x + particleSize).put(StaticData.tmp2.y - particleSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(-1);
-					particleVertices.put(StaticData.tmp2.x + particleSize).put(StaticData.tmp2.y + particleSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(1);
-					particleVertices.put(StaticData.tmp2.x + particleSize).put(StaticData.tmp2.y + particleSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(1);
-					particleVertices.put(StaticData.tmp2.x - particleSize).put(StaticData.tmp2.y + particleSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(1);
-					particleVertices.put(StaticData.tmp2.x - particleSize).put(StaticData.tmp2.y - particleSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(-1);
+					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
+					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(-1).put(-1);
+					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(1).put(-1);
+					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(1).put(1);
+					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(1).put(1);
+					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(-1).put(1);
+					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
+							.put(-1).put(-1);
 					num++;
 				}
 			}
@@ -619,19 +625,19 @@ public class ClientGameEngine {
 				float z = (float) (projectilePosition.z - GameHeader.camera.position.z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = projectileVelocity.w;
-					viewMatrix.transformPosition(StaticData.tmp2.set(x, y, z));
-					shotsVertices.put(StaticData.tmp2.x - shotSize).put(StaticData.tmp2.y - shotSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(-1);
-					shotsVertices.put(StaticData.tmp2.x + shotSize).put(StaticData.tmp2.y - shotSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(-1);
-					shotsVertices.put(StaticData.tmp2.x + shotSize).put(StaticData.tmp2.y + shotSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(1);
-					shotsVertices.put(StaticData.tmp2.x + shotSize).put(StaticData.tmp2.y + shotSize)
-							.put(StaticData.tmp2.z).put(w).put(1).put(1);
-					shotsVertices.put(StaticData.tmp2.x - shotSize).put(StaticData.tmp2.y + shotSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(1);
-					shotsVertices.put(StaticData.tmp2.x - shotSize).put(StaticData.tmp2.y - shotSize)
-							.put(StaticData.tmp2.z).put(w).put(-1).put(-1);
+					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
+					shotsVertices.put(StaticData.usedForNarmal.x - shotSize).put(StaticData.usedForNarmal.y - shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(-1).put(-1);
+					shotsVertices.put(StaticData.usedForNarmal.x + shotSize).put(StaticData.usedForNarmal.y - shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(1).put(-1);
+					shotsVertices.put(StaticData.usedForNarmal.x + shotSize).put(StaticData.usedForNarmal.y + shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(1).put(1);
+					shotsVertices.put(StaticData.usedForNarmal.x + shotSize).put(StaticData.usedForNarmal.y + shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(1).put(1);
+					shotsVertices.put(StaticData.usedForNarmal.x - shotSize).put(StaticData.usedForNarmal.y + shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(-1).put(1);
+					shotsVertices.put(StaticData.usedForNarmal.x - shotSize).put(StaticData.usedForNarmal.y - shotSize)
+							.put(StaticData.usedForNarmal.z).put(w).put(-1).put(-1);
 					num++;
 				}
 			}
@@ -706,9 +712,15 @@ public class ClientGameEngine {
 					}
 					Vector3d targetOrigin = tmp;
 					targetOrigin.set(enemyShip.getPosition().x, enemyShip.getPosition().y, enemyShip.getPosition().z);
+
 					Vector3f interceptorDir = StaticData.intercept(GameHeader.camera.position, shotVelocity,
-							targetOrigin, tmp3.set(GameHeader.camera.linearVel).negate(), StaticData.tmp2);
+							targetOrigin, tmp3.set(GameHeader.camera.linearVel).negate(), StaticData.usedForNarmal);
+
+					if (interceptorDir == null) {
+						return;
+					}
 					viewMatrix.transformDirection(interceptorDir);
+
 					if (interceptorDir.z > 0.0) {
 						return;
 					}
@@ -742,11 +754,11 @@ public class ClientGameEngine {
 				if (enemyShip == null) {
 					return;
 				}
-				Vector3f targetOrigin = StaticData.tmp2;
+				Vector3f targetOrigin = StaticData.usedForNarmal;
 				targetOrigin.set((float) (enemyShip.getPosition().x - GameHeader.camera.position.x),
 						(float) (enemyShip.getPosition().y - GameHeader.camera.position.y),
 						(float) (enemyShip.getPosition().z - GameHeader.camera.position.z));
-				tmp3.set(StaticData.tmp2);
+				tmp3.set(StaticData.usedForNarmal);
 				viewMatrix.transformPosition(targetOrigin);
 				boolean backward = targetOrigin.z > 0.0F;
 				if (backward) {
@@ -843,7 +855,7 @@ public class ClientGameEngine {
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
 						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
 								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmp,
-								StaticData.tmp2)) {
+								StaticData.usedForNarmal)) {
 					projectileVelocity.w = 0.0F;
 					continue projectiles;
 				}
@@ -859,7 +871,7 @@ public class ClientGameEngine {
 						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)
 						&& narrowphase(asteroidMesh.positions, asteroid2.getPosition().x, asteroid2.getPosition().y,
 								asteroid2.getPosition().z, asteroid2.scale, projectilePosition, newPosition, tmp,
-								StaticData.tmp2) //
+								StaticData.usedForNarmal) //
 				) {
 
 					projectileVelocity.w = 0.0F;

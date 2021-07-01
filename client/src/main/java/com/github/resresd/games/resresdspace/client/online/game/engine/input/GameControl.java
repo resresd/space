@@ -1,6 +1,7 @@
 package com.github.resresd.games.resresdspace.client.online.game.engine.input;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_B;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_E;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
@@ -24,6 +25,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -33,34 +35,70 @@ import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
+import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
 
 public class GameControl {
 
 	static long timeLead = System.currentTimeMillis() / 1000;
 	static long timeHUD = System.currentTimeMillis() / 1000;
 
+	static Thread reverseThread;
+
+	private static Thread genReverseThread() {
+		return new Thread(() -> {
+			System.err.println("genReverseThread started");
+
+			SpaceCamera camera = GameHeader.camera;
+			Vector3f linearAcc = camera.linearAcc;
+			Vector3f usedForNarmal = StaticData.usedForNarmal;
+			float mainThrusterAccFactor = GameHeader.getMainThrusterAccFactor();
+
+			while (true) {
+				Vector3f cameraForward = camera.forward(usedForNarmal);
+
+				float mainThrusterAccFactor2 = mainThrusterAccFactor - mainThrusterAccFactor / 4;
+				mainThrusterAccFactor2 = -mainThrusterAccFactor2;
+
+				linearAcc.fma(mainThrusterAccFactor2, cameraForward);
+				System.err.println("cameraForward:" + cameraForward);
+				System.err.println("linearAcc:" + linearAcc);
+			}
+			// System.err.println("genReverseThread ended");
+		});
+	}
+
 	public static void updateControls() {
 		GameHeader.camera.linearAcc.zero();
 		float rotZ = 0.0f;
 		if (GameHeader.getKeyDown()[GLFW_KEY_G]) {
-			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor() * 100,
-					GameHeader.camera.forward(StaticData.tmp2));
+			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor() * 1000,
+					GameHeader.camera.forward(StaticData.usedForNarmal));
 		}
+		if (GameHeader.getKeyDown()[GLFW_KEY_B]) {
+			if (reverseThread == null) {
+				reverseThread = genReverseThread();
+				reverseThread.start();
+			} else {
+				System.err.println("РЕВЕРС УЖЕ ЗАПУЖЕН");
+			}
+
+		}
+
 		if (GameHeader.getKeyDown()[GLFW_KEY_W]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor(),
-					GameHeader.camera.forward(StaticData.tmp2));
+					GameHeader.camera.forward(StaticData.usedForNarmal));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_S]) {
 			GameHeader.camera.linearAcc.fma(-GameHeader.getMainThrusterAccFactor(),
-					GameHeader.camera.forward(StaticData.tmp2));
+					GameHeader.camera.forward(StaticData.usedForNarmal));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_D]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.right(StaticData.tmp2));
+					GameHeader.camera.right(StaticData.usedForNarmal));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_A]) {
 			GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.right(StaticData.tmp2));
+					GameHeader.camera.right(StaticData.usedForNarmal));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_Q]) {
 			rotZ = -1.0f;
@@ -94,11 +132,11 @@ public class GameControl {
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_SPACE]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.up(StaticData.tmp2));
+					GameHeader.camera.up(StaticData.usedForNarmal));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_LEFT_CONTROL]) {
 			GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.up(StaticData.tmp2));
+					GameHeader.camera.up(StaticData.usedForNarmal));
 		}
 		if (MouseHeader.isRightMouseDown()) {
 			GameHeader.camera.angularAcc.set(
@@ -146,7 +184,7 @@ public class GameControl {
 			}
 		});
 
-		GameHeader.getControlHeader().getMouseHeader().setCpCallback(new GLFWCursorPosCallback() {
+		MouseHeader.setCpCallback(new GLFWCursorPosCallback() {
 			@Override
 			public void invoke(long window, double xpos, double ypos) {
 				float normX = (float) ((xpos - WindowHeader.getWidth() / 2.0) / WindowHeader.getWidth() * 2.0);
@@ -170,7 +208,7 @@ public class GameControl {
 			}
 		});
 
-		glfwSetCursorPosCallback(window, GameHeader.getControlHeader().getMouseHeader().getCpCallback());
+		glfwSetCursorPosCallback(window, MouseHeader.getCpCallback());
 		glfwSetFramebufferSizeCallback(WindowHeader.getWindow(), GameHeader.getFbCallback());
 		glfwSetMouseButtonCallback(window, MouseHeader.getMbCallback());
 		glfwSetKeyCallback(window, GameHeader.getKeyCallback());

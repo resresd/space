@@ -11,7 +11,7 @@ import lombok.Setter;
 public class EmitExplosionPacket extends Packet {
 	@Getter
 	@Setter
-	Vector3d p;
+	Vector3d position;
 	@Getter
 	@Setter
 	Vector3f normal;

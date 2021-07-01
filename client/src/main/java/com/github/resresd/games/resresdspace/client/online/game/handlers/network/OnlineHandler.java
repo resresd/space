@@ -27,7 +27,7 @@ public class OnlineHandler extends IoHandlerAdapter {
 		}
 		if (message instanceof EmitExplosionPacket) {
 			EmitExplosionPacket emitExplosionPacket = (EmitExplosionPacket) message;
-			GameHeader.onlinegame.emitExplosion(emitExplosionPacket.getP(), emitExplosionPacket.getNormal());
+			GameHeader.onlinegame.emitExplosion(emitExplosionPacket.getPosition(), emitExplosionPacket.getNormal());
 		}
 		if (message instanceof SpaceEntityDestroyEvent) {
 			SpaceEntityDestroyEvent spaceEntityDestroyEvent = (SpaceEntityDestroyEvent) message;

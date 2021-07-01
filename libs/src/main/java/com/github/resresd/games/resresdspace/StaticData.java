@@ -51,7 +51,7 @@ public class StaticData {
 	 * ИСПОЛЬЗУЕТСЯ В УПРАВЛЕНИИ ДЛЯ ПОВОРОТОВ
 	 */
 	@Getter
-	public static Vector3f tmp2 = new Vector3f();
+	public static Vector3f usedForNarmal = new Vector3f();
 
 	public static Vector3d tmp = new Vector3d();
 
@@ -75,11 +75,14 @@ public class StaticData {
 		float targetVelTangX = targetVel.x - targetVelOrthX;
 		float targetVelTangY = targetVel.y - targetVelOrthY;
 		float targetVelTangZ = targetVel.z - targetVelOrthZ;
+
 		float shotVelSpeed = (float) Math.sqrt(
 				targetVelTangX * targetVelTangX + targetVelTangY * targetVelTangY + targetVelTangZ * targetVelTangZ);
+
 		if (shotVelSpeed > shotSpeed) {
 			return null;
 		}
+
 		float shotSpeedOrth = (float) Math.sqrt(shotSpeed * shotSpeed - shotVelSpeed * shotVelSpeed);
 		float shotVelOrthX = dirToTargetX * shotSpeedOrth;
 		float shotVelOrthY = dirToTargetY * shotSpeedOrth;
@@ -90,7 +93,7 @@ public class StaticData {
 
 	public static boolean narrowphase(FloatBuffer data, double x, double y, double z, float scale, Vector3d pOld,
 			Vector3d pNew, Vector3d intersectionPoint, Vector3f normal) {
-		StaticData.tmp2.set(tmp.set(pOld).sub(x, y, z)).div(scale);
+		StaticData.usedForNarmal.set(tmp.set(pOld).sub(x, y, z)).div(scale);
 		tmp3.set(tmp.set(pNew).sub(x, y, z)).div(scale);
 		data.clear();
 		boolean intersects = false;
@@ -104,11 +107,12 @@ public class StaticData {
 			float v2X = data.get();
 			float v2Y = data.get();
 			float v2Z = data.get();
-			if (Intersectionf.intersectLineSegmentTriangle(StaticData.tmp2.x, StaticData.tmp2.y, StaticData.tmp2.z,
-					tmp3.x, tmp3.y, tmp3.z, v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z, 1E-6f, StaticData.tmp2)) {
-				intersectionPoint.x = StaticData.tmp2.x * scale + x;
-				intersectionPoint.y = StaticData.tmp2.y * scale + y;
-				intersectionPoint.z = StaticData.tmp2.z * scale + z;
+			if (Intersectionf.intersectLineSegmentTriangle(StaticData.usedForNarmal.x, StaticData.usedForNarmal.y,
+					StaticData.usedForNarmal.z, tmp3.x, tmp3.y, tmp3.z, v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z,
+					1E-6f, StaticData.usedForNarmal)) {
+				intersectionPoint.x = StaticData.usedForNarmal.x * scale + x;
+				intersectionPoint.y = StaticData.usedForNarmal.y * scale + y;
+				intersectionPoint.z = StaticData.usedForNarmal.z * scale + z;
 				GeometryUtils.normal(v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z, normal);
 				intersects = true;
 			}

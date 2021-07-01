@@ -60,12 +60,16 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 		if (health != 0D) {
 			health = 0D;
 		}
+		removeFromAll(this);
+		spawnResource();
+	}
 
+	private void removeFromAll(SpaceEntity spaceEntity) {
 		// УДАЛЯЕМ СО ВСЕХ ИСТОЧНИКОВ
 		// FIXME ПРОВЕРИТЬ РАБОТУ
 		// containers.parallelStream().filter(list -> list.contains(this)).forEach(l ->
 		// l.remove(this));
-		spawnResource();
+
 	}
 
 	@Override

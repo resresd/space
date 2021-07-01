@@ -8,8 +8,6 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 
 import com.github.resresd.games.resresdspace.client.online.game.configs.ClientConfig;
 import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
-import com.github.resresd.games.resresdspace.client.online.game.header.control.ControlHeader;
-import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
 import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
 
 import lombok.Getter;
@@ -33,12 +31,12 @@ public class GameHeader {
 	// ENGINE
 
 	// WINDOW HEADER
-	WindowHeader windowHeader = new WindowHeader();
+	// WindowHeader windowHeader = new WindowHeader();
 	// WINDOW HEADER
 
 	// CONTROL HEADER
-	@Getter
-	private static ControlHeader controlHeader = new ControlHeader();
+	// @Getter
+	// private static ControlHeader controlHeader = new ControlHeader();
 	// CONTROL HEADER
 
 	public static SpaceCamera camera = new SpaceCamera();
@@ -53,7 +51,7 @@ public class GameHeader {
 	@Getter
 
 	// максимальная скорость
-	private static float maxLinearVel = 200.0F;
+	private static float maxLinearVel = 20000.0F;
 
 	@Getter
 	@Setter

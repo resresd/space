@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class MouseHeader {
-	@Getter
-	@Setter
-	private GLFWCursorPosCallback cpCallback;
+	private static @Getter @Setter GLFWCursorPosCallback cpCallback;
 	@Getter
 	@Setter
 	static GLFWMouseButtonCallback mbCallback;
