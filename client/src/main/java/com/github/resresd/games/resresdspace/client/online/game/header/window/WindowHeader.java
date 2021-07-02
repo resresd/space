@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class WindowHeader {
+	private @Getter @Setter static boolean windowed = false;
+
 	@Getter
 	@Setter
 	static String title = "Space";

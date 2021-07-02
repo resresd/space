@@ -160,7 +160,9 @@ import com.github.resresd.games.resresdspace.client.online.game.engine.window.Ga
 import com.github.resresd.games.resresdspace.client.online.game.handlers.network.NetworkHandler;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
+import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader.mouseMode;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
+import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.VectorsDataObjectPairD;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
@@ -168,8 +170,6 @@ import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
 
 public class ClientGameEngine {
 	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-	private boolean windowed = false;
 
 	public static boolean rune;
 
@@ -190,16 +190,18 @@ public class ClientGameEngine {
 	private int particleProgram;
 	private int particle_projUniform;
 
-	public static int asteroidCount = 3;
-	private static float shipRadius = 4.0F;
-
 	public static CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
 	public static CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
+
 	public static CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
 
+	public static CopyOnWriteArrayList<VectorsDataObjectPairD> particles = new CopyOnWriteArrayList<>();
+
+	public static boolean active;
+
 	private FloatBuffer shotsVertices = BufferUtils.createFloatBuffer(6 * 6 * maxShots);
-	private FloatBuffer particleVertices = BufferUtils.createFloatBuffer(6 * 6 * maxParticles);
-	private FloatBuffer crosshairVertices = BufferUtils.createFloatBuffer(6 * 2);
+	private FloatBuffer particleVerticesFloatBuffer = BufferUtils.createFloatBuffer(6 * 6 * maxParticles);
+	private FloatBuffer crosshairVerticesFloatBuffer = BufferUtils.createFloatBuffer(6 * 2);
 
 	private ByteBuffer charBuffer = BufferUtils.createByteBuffer(16 * 270);
 
@@ -222,8 +224,6 @@ public class ClientGameEngine {
 	private GLCapabilities caps;
 	private GLFWWindowSizeCallback wsCallback;
 	private Callback debugProc;
-
-	public static CopyOnWriteArrayList<VectorsDataObjectPairD> particles = new CopyOnWriteArrayList<>();
 
 	public void initConfig() throws IOException, NoSuchAlgorithmException {
 		logger.info("initConfig-start");
@@ -290,18 +290,19 @@ public class ClientGameEngine {
 
 		long monitor = glfwGetPrimaryMonitor();
 		GLFWVidMode vidmode = glfwGetVideoMode(monitor);
-		if (!windowed) {
+		if (!WindowHeader.isWindowed()) {
 			WindowHeader.setWidth(vidmode.width());
 			WindowHeader.setHeight(vidmode.height());
 			WindowHeader.setFbWidth(WindowHeader.getWidth());
 			WindowHeader.setFbHeight(WindowHeader.getHeight());
 		}
 		WindowHeader.setWindow(glfwCreateWindow(WindowHeader.getWidth(), WindowHeader.getHeight(),
-				WindowHeader.getTitle(), !windowed ? monitor : 0L, NULL));
+				WindowHeader.getTitle(), !WindowHeader.isWindowed() ? monitor : 0L, NULL));
 
 		if (WindowHeader.getWindow() == NULL) {
 			throw new AssertionError("Failed to create the GLFW window");
 		}
+
 		glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR));
 
 		GameControl.createCallbacks(WindowHeader.getWindow());
@@ -327,7 +328,7 @@ public class ClientGameEngine {
 		WindowHeader.setFbHeight(framebufferSize.get(1));
 		caps = GL.createCapabilities();
 		if (!caps.OpenGL20) {
-			throw new AssertionError("This demo requires OpenGL 2.0.");
+			throw new AssertionError("Requires OpenGL 2.0.");
 		}
 		debugProc = GLUtil.setupDebugMessageCallback();
 
@@ -348,7 +349,7 @@ public class ClientGameEngine {
 		logger.info("init-end");
 	}
 
-	public static void createShip() throws IOException {
+	public static void createShip() {
 		shipPositionVbo = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, shipPositionVbo);
 		glBufferData(GL_ARRAY_BUFFER, shipMesh.positions, GL_STATIC_DRAW);
@@ -374,7 +375,7 @@ public class ClientGameEngine {
 		NetworkHandler.startNetwork();
 	}
 
-	private void createAsteroid() throws IOException {
+	private void createAsteroid() {
 		asteroidPositionVbo = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, asteroidPositionVbo);
 		glBufferData(GL_ARRAY_BUFFER, asteroidMesh.positions, GL_STATIC_DRAW);
@@ -450,19 +451,23 @@ public class ClientGameEngine {
 
 	private void update() {
 		long thisTime = System.nanoTime();
-		float deltaTime = (thisTime - lastTime) / 1E9f;
+		float deltaTime = (thisTime - lastTime) / 1E9F;
 		lastTime = thisTime;
 		updateShots(deltaTime);
 		updateParticles(deltaTime);
-		// ПЕРЕМЕЩЕНИЕ КАМЕРЫ НА ДИСТАНЦИЮ ИСХОДЯ ИЗ deltaTime
-		GameHeader.camera.update(deltaTime);
-		// УСТАНОВКА ПЕРСПЕКТИВЫ
 
+		// TODO ПЕРЕМЕЩАТЬ КАМЕРУ ОТНОСИТЕЛЬНО МЕСТА КАМЕРЫ (ГЛАВНОЕ,ТУРЕЛИ)
+		//
+		// ПЕРЕМЕЩЕНИЕ КАМЕРЫ НА ДИСТАНЦИЮ ИСХОДЯ ИЗ deltaTime
+		SpaceCamera camera = GameHeader.camera;
+		camera.update(deltaTime);
+
+		// УСТАНОВКА ПЕРСПЕКТИВЫ
 		projMatrix.setPerspective((float) Math.toRadians(40.0F),
 				(float) WindowHeader.getWidth() / WindowHeader.getHeight(), 0.1f,
 				GameHeader.getClientConfig().getWindowConfig().getDistanceDraw());
 
-		viewMatrix.set(GameHeader.camera.rotation).invert(invViewMatrix);
+		viewMatrix.set(camera.rotation).invert(invViewMatrix);
 		viewProjMatrix.set(projMatrix).mul(viewMatrix).invert(invViewProjMatrix);
 		frustumIntersection.set(viewProjMatrix);
 
@@ -484,20 +489,19 @@ public class ClientGameEngine {
 
 		GameControl.updateControls();
 
-		/* Let the player shoot a bullet */
 		if (MouseHeader.isLeftMouseDown() && (thisTime - lastShotTime >= 1E6 * shotMilliseconds)) {
-			// TODO ОТСЫЛАТЬ ВЫСТРЕЛЫ НА СЕРВЕР
-			shoot();
-			lastShotTime = thisTime;
+			if (MouseHeader.mode == mouseMode.MOVE) {
+				shoot();
+				lastShotTime = thisTime;
+			}
 		}
-		/* Let the opponent shoot a bullet */
 
 	}
 
 	boolean firstShot = false;
 
 	private void shoot() {
-		// TODO перенести в сервер
+		// TODO перенести создание выстрела в сервер
 		try {
 
 			Shot shot = new Shot();
@@ -505,27 +509,27 @@ public class ClientGameEngine {
 			Vector4f shotVel = shot.getProjectileVelocity();
 
 			//
-			invViewProjMatrix
-					.transformProject(
-							StaticData.usedForNarmal.set(MouseHeader.getMouseX(), -MouseHeader.getMouseY(), 1.0F))
-					.normalize();
+
+			double mouseX = MouseHeader.getMouseX();
+			double mouseY = MouseHeader.getMouseY();
+			SpaceCamera camera = GameHeader.camera;
+
+			invViewProjMatrix.transformProject(StaticData.usedForNarmal.set(mouseX, -mouseY, 1.0F)).normalize();
 			if (shotVel.w <= 0.0F) {
-				shotVel.x = GameHeader.camera.linearVel.x + StaticData.usedForNarmal.x * shotVelocity;
-				shotVel.y = GameHeader.camera.linearVel.y + StaticData.usedForNarmal.y * shotVelocity;
-				shotVel.z = GameHeader.camera.linearVel.z + StaticData.usedForNarmal.z * shotVelocity;
+				shotVel.x = camera.linearVel.x + StaticData.usedForNarmal.x * shotVelocity;
+				shotVel.y = camera.linearVel.y + StaticData.usedForNarmal.y * shotVelocity;
+				shotVel.z = camera.linearVel.z + StaticData.usedForNarmal.z * shotVelocity;
 				shotVel.w = 0.01f;
 				if (!firstShot) {
-					shotPosition.set(GameHeader.camera.right(tmp3)).mul(shotSeparation).add(GameHeader.camera.position);
+					shotPosition.set(camera.right(tmp3)).mul(shotSeparation).add(camera.position);
 					firstShot = true;
 				} else {
-					shotPosition.set(GameHeader.camera.right(tmp3)).mul(-shotSeparation)
-							.add(GameHeader.camera.position);
+					shotPosition.set(camera.right(tmp3)).mul(-shotSeparation).add(camera.position);
 					firstShot = false;//
 				}
 			}
 			//
 			directShots.add(shot);
-			// TODO SEND SHOT IN SERVER
 			NetworkHandler.session.write(shot);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -545,12 +549,16 @@ public class ClientGameEngine {
 			if (ship == null) {
 				continue;
 			}
-			float x = (float) (ship.getPosition().x - GameHeader.camera.position.x);
-			float y = (float) (ship.getPosition().y - GameHeader.camera.position.y);
-			float z = (float) (ship.getPosition().z - GameHeader.camera.position.z);
-			if (frustumIntersection.testSphere(x, y, z, shipRadius)) {
+			SpaceCamera camera = GameHeader.camera;
+
+			float x = (float) (ship.getPosition().x - camera.position.x);
+			float y = (float) (ship.getPosition().y - camera.position.y);
+			float z = (float) (ship.getPosition().z - camera.position.z);
+
+			float radius = ship.getShipRadius();
+			if (frustumIntersection.testSphere(x, y, z, radius)) {
 				modelMatrix.translation(x, y, z);
-				modelMatrix.scale(shipRadius);
+				modelMatrix.scale(radius);
 
 				glUniformMatrix4fv(ship_modelUniform, false, modelMatrix.get(matrixBuffer));
 				glDrawArrays(GL_TRIANGLES, 0, shipMesh.numVertices);
@@ -560,50 +568,52 @@ public class ClientGameEngine {
 	}
 
 	private void drawParticles() {
-		particleVertices.clear();
+		particleVerticesFloatBuffer.clear();
 		int num = 0;
 
 		for (VectorsDataObjectPairD particle : particles) {
 			Vector3d particlePosition = particle.getParticlePosition();
 			Vector4d particleVelocity = particle.getParticleVelocity();
 			if (particleVelocity.w > 0.0F) {
-				float x = (float) (particlePosition.x - GameHeader.camera.position.x);
-				float y = (float) (particlePosition.y - GameHeader.camera.position.y);
-				float z = (float) (particlePosition.z - GameHeader.camera.position.z);
+				SpaceCamera camera = GameHeader.camera;
+
+				float x = (float) (particlePosition.x - camera.position.x);
+				float y = (float) (particlePosition.y - camera.position.y);
+				float z = (float) (particlePosition.z - camera.position.z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = (float) particleVelocity.w;
 					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
-					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x - particleSize)
 							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(-1).put(-1);
-					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x + particleSize)
 							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(1).put(-1);
-					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x + particleSize)
 							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(1).put(1);
-					particleVertices.put(StaticData.usedForNarmal.x + particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x + particleSize)
 							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(1).put(1);
-					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x - particleSize)
 							.put(StaticData.usedForNarmal.y + particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(-1).put(1);
-					particleVertices.put(StaticData.usedForNarmal.x - particleSize)
+					particleVerticesFloatBuffer.put(StaticData.usedForNarmal.x - particleSize)
 							.put(StaticData.usedForNarmal.y - particleSize).put(StaticData.usedForNarmal.z).put(w)
 							.put(-1).put(-1);
 					num++;
 				}
 			}
 		}
-		particleVertices.flip();
+		particleVerticesFloatBuffer.flip();
 		if (num > 0) {
 			glUseProgram(particleProgram);
 			glDepthMask(false);
 			glEnable(GL_BLEND);
-			glVertexPointer(4, GL_FLOAT, 6 * 4, particleVertices);
-			particleVertices.position(4);
-			glTexCoordPointer(2, GL_FLOAT, 6 * 4, particleVertices);
-			particleVertices.position(0);
+			glVertexPointer(4, GL_FLOAT, 6 * 4, particleVerticesFloatBuffer);
+			particleVerticesFloatBuffer.position(4);
+			glTexCoordPointer(2, GL_FLOAT, 6 * 4, particleVerticesFloatBuffer);
+			particleVerticesFloatBuffer.position(0);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glDrawArrays(GL_TRIANGLES, 0, num * 6);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -620,9 +630,10 @@ public class ClientGameEngine {
 			Vector3d projectilePosition = shot.getPosition();
 			Vector4f projectileVelocity = shot.getProjectileVelocity();
 			if (projectileVelocity.w > 0.0F) {
-				float x = (float) (projectilePosition.x - GameHeader.camera.position.x);
-				float y = (float) (projectilePosition.y - GameHeader.camera.position.y);
-				float z = (float) (projectilePosition.z - GameHeader.camera.position.z);
+				SpaceCamera camera = GameHeader.camera;
+				float x = (float) (projectilePosition.x - camera.position.x);
+				float y = (float) (projectilePosition.y - camera.position.y);
+				float z = (float) (projectilePosition.z - camera.position.z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = projectileVelocity.w;
 					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
@@ -690,9 +701,9 @@ public class ClientGameEngine {
 		glVertex3f(0, 0, 1);
 		glColor4f(1, 1, 1, 1);
 		glVertex3f(0, 0, 0);
-		glVertex3f(GameHeader.camera.linearVel.x / GameHeader.getMaxLinearVel(),
-				GameHeader.camera.linearVel.y / GameHeader.getMaxLinearVel(),
-				GameHeader.camera.linearVel.z / GameHeader.getMaxLinearVel());
+		SpaceCamera camera = GameHeader.camera;
+		glVertex3f(camera.linearVel.x / GameHeader.getMaxLinearVel(), camera.linearVel.y / GameHeader.getMaxLinearVel(),
+				camera.linearVel.z / GameHeader.getMaxLinearVel());
 		glEnd();
 		glPopMatrix();
 		glMatrixMode(GL_PROJECTION);
@@ -710,11 +721,12 @@ public class ClientGameEngine {
 					if (enemyShip == null) {
 						return;
 					}
+					SpaceCamera camera = GameHeader.camera;
 					Vector3d targetOrigin = tmp;
 					targetOrigin.set(enemyShip.getPosition().x, enemyShip.getPosition().y, enemyShip.getPosition().z);
 
-					Vector3f interceptorDir = StaticData.intercept(GameHeader.camera.position, shotVelocity,
-							targetOrigin, tmp3.set(GameHeader.camera.linearVel).negate(), StaticData.usedForNarmal);
+					Vector3f interceptorDir = StaticData.intercept(camera.position, shotVelocity, targetOrigin,
+							tmp3.set(camera.linearVel).negate(), StaticData.usedForNarmal);
 
 					if (interceptorDir == null) {
 						return;
@@ -728,14 +740,21 @@ public class ClientGameEngine {
 					float crosshairSize = 0.01F;
 					float xs = crosshairSize * WindowHeader.getHeight() / WindowHeader.getWidth();
 					float ys = crosshairSize;
-					crosshairVertices.clear();
-					crosshairVertices.put(interceptorDir.x - xs).put(interceptorDir.y - ys);
-					crosshairVertices.put(interceptorDir.x + xs).put(interceptorDir.y - ys);
-					crosshairVertices.put(interceptorDir.x + xs).put(interceptorDir.y + ys);
-					crosshairVertices.put(interceptorDir.x - xs).put(interceptorDir.y + ys);
-					crosshairVertices.flip();
+
+					float intercDirXMxs = interceptorDir.x - xs;
+					float intercDirXPxs = interceptorDir.x + xs;
+
+					float intercDirYMys = interceptorDir.y - ys;
+					float intercDirYPys = interceptorDir.y + ys;
+
+					crosshairVerticesFloatBuffer.clear();
+					crosshairVerticesFloatBuffer.put(intercDirXMxs).put(intercDirYMys);
+					crosshairVerticesFloatBuffer.put(intercDirXPxs).put(intercDirYMys);
+					crosshairVerticesFloatBuffer.put(intercDirXPxs).put(intercDirYPys);
+					crosshairVerticesFloatBuffer.put(intercDirXMxs).put(intercDirYPys);
+					crosshairVerticesFloatBuffer.flip();
 					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-					glVertexPointer(2, GL_FLOAT, 0, crosshairVertices);
+					glVertexPointer(2, GL_FLOAT, 0, crosshairVerticesFloatBuffer);
 					glDrawArrays(GL_QUADS, 0, 4);
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}
@@ -755,9 +774,21 @@ public class ClientGameEngine {
 					return;
 				}
 				Vector3f targetOrigin = StaticData.usedForNarmal;
-				targetOrigin.set((float) (enemyShip.getPosition().x - GameHeader.camera.position.x),
-						(float) (enemyShip.getPosition().y - GameHeader.camera.position.y),
-						(float) (enemyShip.getPosition().z - GameHeader.camera.position.z));
+				SpaceCamera camera = GameHeader.camera;
+
+				double enemyShipPosX = enemyShip.getPosition().x;
+				double enemyShipPosY = enemyShip.getPosition().y;
+				double enemyShipPosZ = enemyShip.getPosition().z;
+
+				double cameraPositionX = camera.position.x;
+				double cameraPositionY = camera.position.y;
+				double cameraPositionZ = camera.position.z;
+
+				float posX = (float) (enemyShipPosX - cameraPositionX);
+				float posY = (float) (enemyShipPosY - cameraPositionY);
+				float posZ = (float) (enemyShipPosZ - cameraPositionZ);
+				targetOrigin.set(posX, posY, posZ);
+
 				tmp3.set(StaticData.usedForNarmal);
 				viewMatrix.transformPosition(targetOrigin);
 				boolean backward = targetOrigin.z > 0.0F;
@@ -780,14 +811,14 @@ public class ClientGameEngine {
 				float crosshairSize = 0.03f;
 				float xs = crosshairSize * WindowHeader.getHeight() / WindowHeader.getWidth();
 				float ys = crosshairSize;
-				crosshairVertices.clear();
-				crosshairVertices.put(targetOrigin.x - xs).put(targetOrigin.y - ys);
-				crosshairVertices.put(targetOrigin.x + xs).put(targetOrigin.y - ys);
-				crosshairVertices.put(targetOrigin.x + xs).put(targetOrigin.y + ys);
-				crosshairVertices.put(targetOrigin.x - xs).put(targetOrigin.y + ys);
-				crosshairVertices.flip();
+				crosshairVerticesFloatBuffer.clear();
+				crosshairVerticesFloatBuffer.put(targetOrigin.x - xs).put(targetOrigin.y - ys);
+				crosshairVerticesFloatBuffer.put(targetOrigin.x + xs).put(targetOrigin.y - ys);
+				crosshairVerticesFloatBuffer.put(targetOrigin.x + xs).put(targetOrigin.y + ys);
+				crosshairVerticesFloatBuffer.put(targetOrigin.x - xs).put(targetOrigin.y + ys);
+				crosshairVerticesFloatBuffer.flip();
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glVertexPointer(2, GL_FLOAT, 0, crosshairVertices);
+				glVertexPointer(2, GL_FLOAT, 0, crosshairVerticesFloatBuffer);
 				glDrawArrays(GL_QUADS, 0, 4);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				// Draw distance text of enemy
@@ -851,6 +882,8 @@ public class ClientGameEngine {
 					continue;
 				}
 
+				float shipRadius = ship.getShipRadius();
+
 				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
 						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
@@ -871,8 +904,7 @@ public class ClientGameEngine {
 						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)
 						&& narrowphase(asteroidMesh.positions, asteroid2.getPosition().x, asteroid2.getPosition().y,
 								asteroid2.getPosition().z, asteroid2.scale, projectilePosition, newPosition, tmp,
-								StaticData.usedForNarmal) //
-				) {
+								StaticData.usedForNarmal)) {
 
 					projectileVelocity.w = 0.0F;
 					continue projectiles;
@@ -935,6 +967,7 @@ public class ClientGameEngine {
 
 	private void loop() {
 		logger.info("loop-start");
+		ClientGameEngine.active = true;
 		while (!glfwWindowShouldClose(WindowHeader.getWindow())) {
 			glfwPollEvents();
 			glViewport(0, 0, WindowHeader.getFbWidth(), WindowHeader.getFbHeight());
@@ -942,6 +975,7 @@ public class ClientGameEngine {
 			render();
 			glfwSwapBuffers(WindowHeader.getWindow());
 		}
+		ClientGameEngine.active = false;
 		logger.info("loop-end");
 	}
 

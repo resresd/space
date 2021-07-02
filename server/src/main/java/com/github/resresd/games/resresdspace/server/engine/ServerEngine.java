@@ -4,9 +4,10 @@ import static com.github.resresd.games.resresdspace.StaticData.asteroidMesh;
 import static com.github.resresd.games.resresdspace.StaticData.broadphase;
 import static com.github.resresd.games.resresdspace.StaticData.narrowphase;
 import static com.github.resresd.games.resresdspace.StaticData.shipMesh;
-import static com.github.resresd.games.resresdspace.StaticData.tmp;
+import static com.github.resresd.games.resresdspace.StaticData.tmpUsedForPossition;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.FloatBuffer;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.joml.GeometryUtils;
@@ -164,8 +165,8 @@ public class ServerEngine extends Thread {
 			Vector3d position = targetShip.getPosition();
 			Vector3f linearVel = targetShip.getLinearVel();
 
-			Vector3d shotPos = tmp.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z).sub(position)
-					.negate().normalize().mul(1.01f * shipRadius)
+			Vector3d shotPos = tmpUsedForPossition.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z)
+					.sub(position).negate().normalize().mul(1.01f * shipRadius)
 					.add(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z);
 			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel,
 					StaticData.usedForNarmal);
@@ -208,6 +209,8 @@ public class ServerEngine extends Thread {
 
 		for (Shot shot : directShots) {
 			Vector4f projectileVelocity = shot.getProjectileVelocity();
+			double damage = shot.getDamage();
+
 			if (projectileVelocity.w <= 0.0F) {
 				directShots.remove(shot);
 				continue;
@@ -233,10 +236,10 @@ public class ServerEngine extends Thread {
 				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
 						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
-								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmp,
+								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmpUsedForPossition,
 								StaticData.usedForNarmal)) {
 
-					if (ship.damage(1.0D)) {
+					if (ship.damage(damage)) {
 						localShips.remove(ship);
 						System.err.println(ship + " уничтожен");
 						SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
@@ -246,7 +249,7 @@ public class ServerEngine extends Thread {
 					}
 
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setPosition(tmp);
+					emitExplosionPacket.setPosition(tmpUsedForPossition);
 					emitExplosionPacket.setNormal(null);
 					NetWorkHeader.sendBroadcast(emitExplosionPacket);
 
@@ -260,14 +263,21 @@ public class ServerEngine extends Thread {
 					continue;
 				}
 				// СТОЛКНОВЕНИЕ СНАРЯДА С АСТЕРОЙДОМ
-				if (broadphase(asteroid2.getPosition().x, asteroid2.getPosition().y, asteroid2.getPosition().z,
-						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)
-						&& narrowphase(asteroidMesh.positions, asteroid2.getPosition().x, asteroid2.getPosition().y,
-								asteroid2.getPosition().z, asteroid2.scale, projectilePosition, newPosition, tmp,
-								StaticData.usedForNarmal)) {
+				Vector3d asteroidPos = asteroid2.getPosition();
+				double aPosX = asteroidPos.x;
+				double aPosY = asteroidPos.y;
+				double aPosZ = asteroidPos.z;
+
+				float asteroidScale = asteroid2.scale;
+				float asteroidMeshRadius = asteroidMesh.boundingSphereRadius;
+				FloatBuffer asteroidMeshPositions = asteroidMesh.positions;
+
+				if (broadphase(aPosX, aPosY, aPosZ, asteroidMeshRadius, asteroidScale, projectilePosition, newPosition)
+						&& narrowphase(asteroidMeshPositions, aPosX, aPosY, aPosZ, asteroidScale, projectilePosition,
+								newPosition, tmpUsedForPossition, StaticData.usedForNarmal)) {
 
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setPosition(tmp);
+					emitExplosionPacket.setPosition(tmpUsedForPossition);
 					emitExplosionPacket.setNormal(StaticData.usedForNarmal);// FIXME
 					NetWorkHeader.sendBroadcast(emitExplosionPacket);
 

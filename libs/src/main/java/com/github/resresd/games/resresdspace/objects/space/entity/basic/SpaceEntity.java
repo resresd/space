@@ -14,6 +14,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class SpaceEntity implements Serializable, SpaceEntityInterface {
+
+	private static final long serialVersionUID = -3968104750159381671L;
+
 	@Getter
 	@Setter
 	int id;
@@ -24,7 +27,7 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 
 	@Getter
 	@Setter
-	private Double health = 10.0D;
+	private Double health = 100.0D;
 
 	@Getter
 	Vector3d position = new Vector3d(0, 0, 10);

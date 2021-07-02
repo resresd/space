@@ -53,7 +53,7 @@ public class StaticData {
 	@Getter
 	public static Vector3f usedForNarmal = new Vector3f();
 
-	public static Vector3d tmp = new Vector3d();
+	public static Vector3d tmpUsedForPossition = new Vector3d();
 
 	// WTF
 	public static Vector3f tmp3 = new Vector3f();
@@ -93,8 +93,8 @@ public class StaticData {
 
 	public static boolean narrowphase(FloatBuffer data, double x, double y, double z, float scale, Vector3d pOld,
 			Vector3d pNew, Vector3d intersectionPoint, Vector3f normal) {
-		StaticData.usedForNarmal.set(tmp.set(pOld).sub(x, y, z)).div(scale);
-		tmp3.set(tmp.set(pNew).sub(x, y, z)).div(scale);
+		StaticData.usedForNarmal.set(tmpUsedForPossition.set(pOld).sub(x, y, z)).div(scale);
+		tmp3.set(tmpUsedForPossition.set(pNew).sub(x, y, z)).div(scale);
 		data.clear();
 		boolean intersects = false;
 		while (data.hasRemaining() && !intersects) {

@@ -12,6 +12,12 @@ public class MouseHeader {
 	@Setter
 	static GLFWMouseButtonCallback mbCallback;
 
+	public enum mouseMode {
+		MOVE, MENU, SELECTTARGET
+	}
+
+	public static @Getter @Setter mouseMode mode = mouseMode.MOVE;
+
 	@Getter
 	@Setter
 	static double mouseX = 0.0D;

@@ -25,7 +25,6 @@ import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 
-import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -34,77 +33,40 @@ import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
+import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader.mouseMode;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
-import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
+import com.github.resresd.games.resresdspace.client.online.game.utils.MouseUtils;
 
 public class GameControl {
 
 	static long timeLead = System.currentTimeMillis() / 1000;
 	static long timeHUD = System.currentTimeMillis() / 1000;
 
-	static Thread reverseThread;
-
-	private static Thread genReverseThread() {
-		return new Thread(() -> {
-			System.err.println("genReverseThread started");
-
-			SpaceCamera camera = GameHeader.camera;
-			Vector3f linearAcc = camera.linearAcc;
-			Vector3f usedForNarmal = StaticData.usedForNarmal;
-			float mainThrusterAccFactor = GameHeader.getMainThrusterAccFactor();
-
-			while (true) {
-				Vector3f cameraForward = camera.forward(usedForNarmal);
-
-				float mainThrusterAccFactor2 = mainThrusterAccFactor - mainThrusterAccFactor / 4;
-				mainThrusterAccFactor2 = -mainThrusterAccFactor2;
-
-				linearAcc.fma(mainThrusterAccFactor2, cameraForward);
-				System.err.println("cameraForward:" + cameraForward);
-				System.err.println("linearAcc:" + linearAcc);
-			}
-			// System.err.println("genReverseThread ended");
-		});
-	}
-
 	public static void updateControls() {
 		GameHeader.camera.linearAcc.zero();
-		float rotZ = 0.0f;
+		float rotationByZ = 0.0f;
 		if (GameHeader.getKeyDown()[GLFW_KEY_G]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor() * 1000,
 					GameHeader.camera.forward(StaticData.usedForNarmal));
 		}
-		if (GameHeader.getKeyDown()[GLFW_KEY_B]) {
-			if (reverseThread == null) {
-				reverseThread = genReverseThread();
-				reverseThread.start();
-			} else {
-				System.err.println("РЕВЕРС УЖЕ ЗАПУЖЕН");
-			}
-
-		}
-
 		if (GameHeader.getKeyDown()[GLFW_KEY_W]) {
-			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor(),
-					GameHeader.camera.forward(StaticData.usedForNarmal));
-		}
-		if (GameHeader.getKeyDown()[GLFW_KEY_S]) {
-			GameHeader.camera.linearAcc.fma(-GameHeader.getMainThrusterAccFactor(),
-					GameHeader.camera.forward(StaticData.usedForNarmal));
-		}
-		if (GameHeader.getKeyDown()[GLFW_KEY_D]) {
-			GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.right(StaticData.usedForNarmal));
+			moveW();
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_A]) {
-			GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.right(StaticData.usedForNarmal));
+			moveA();
 		}
+		if (GameHeader.getKeyDown()[GLFW_KEY_S]) {
+			moveS();
+		}
+		if (GameHeader.getKeyDown()[GLFW_KEY_D]) {
+			moveD();
+		}
+
 		if (GameHeader.getKeyDown()[GLFW_KEY_Q]) {
-			rotZ = -1.0f;
+			rotationByZ = -1.0f;
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_E]) {
-			rotZ = +1.0f;
+			rotationByZ = +1.0f;
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_L]) {
 			long cur = System.currentTimeMillis() / 1000;
@@ -138,15 +100,53 @@ public class GameControl {
 			GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
 					GameHeader.camera.up(StaticData.usedForNarmal));
 		}
+
+		if (GameHeader.getKeyDown()[GLFW_KEY_B]) {
+			MouseUtils.changeModeNext();
+		}
+
+		if (MouseHeader.mode == mouseMode.MOVE) {
+			double mouseX = MouseHeader.getMouseX();
+			double mouseY = MouseHeader.getMouseY();
+
+			float num0 = 2.0f;
+			double num1 = num0 * mouseY * mouseY * mouseY;
+			double num2 = num0 * mouseX * mouseX * mouseX;
+			GameHeader.camera.angularAcc.set(num1, num2, rotationByZ);
+		} else {
+			GameHeader.camera.angularAcc.set(0, 0, rotationByZ);
+			double linearVelAbs = GameHeader.camera.linearVel.length();
+
+			if (linearVelAbs > GameHeader.getMaxLinearVel()) {
+				GameHeader.camera.linearVel.normalize().mul(GameHeader.getMaxLinearVel());
+			}
+		}
+
 		if (MouseHeader.isRightMouseDown()) {
-			GameHeader.camera.angularAcc.set(
-					2.0f * MouseHeader.getMouseY() * MouseHeader.getMouseY() * MouseHeader.getMouseY(),
-					2.0f * MouseHeader.getMouseX() * MouseHeader.getMouseX() * MouseHeader.getMouseX(), rotZ);
-		} else if (!MouseHeader.isRightMouseDown())
-			GameHeader.camera.angularAcc.set(0, 0, rotZ);
-		double linearVelAbs = GameHeader.camera.linearVel.length();
-		if (linearVelAbs > GameHeader.getMaxLinearVel())
-			GameHeader.camera.linearVel.normalize().mul(GameHeader.getMaxLinearVel());
+		}
+		if (MouseHeader.isRightMouseDown()) {
+		}
+
+	}
+
+	private static void moveA() {
+		GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
+				GameHeader.camera.right(StaticData.usedForNarmal));
+	}
+
+	private static void moveD() {
+		GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
+				GameHeader.camera.right(StaticData.usedForNarmal));
+	}
+
+	private static void moveS() {
+		GameHeader.camera.linearAcc.fma(-GameHeader.getMainThrusterAccFactor(),
+				GameHeader.camera.forward(StaticData.usedForNarmal));
+	}
+
+	private static void moveW() {
+		GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor(),
+				GameHeader.camera.forward(StaticData.usedForNarmal));
 	}
 
 	public static void createCallbacks(long window) {
