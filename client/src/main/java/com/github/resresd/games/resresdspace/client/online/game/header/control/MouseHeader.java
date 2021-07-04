@@ -13,10 +13,10 @@ public class MouseHeader {
 	static GLFWMouseButtonCallback mbCallback;
 
 	public enum mouseMode {
-		ONLYSHOOT, MOVE, MENU, SELECTTARGET
+		ONLYSHOOT, MOVEShot, MENU, SELECTTARGET
 	}
 
-	public static @Getter @Setter mouseMode mode = mouseMode.MOVE;
+	public static @Getter @Setter mouseMode mode = mouseMode.MOVEShot;
 
 	@Getter
 	@Setter

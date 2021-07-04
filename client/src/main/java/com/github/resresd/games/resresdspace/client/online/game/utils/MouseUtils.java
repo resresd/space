@@ -19,21 +19,23 @@ public class MouseUtils {
 		long cur = System.currentTimeMillis() / 1000;
 		boolean bool = ((cur - timeMouse) >= 2);
 		if (bool) {
-			if (currentMode == mouseMode.MOVE) {
-
+			switch (currentMode) {
+			case MOVEShot:
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR));
 				MouseHeader.mode = mouseMode.SELECTTARGET;
-
-			} else if (currentMode == mouseMode.SELECTTARGET) {
-
+				break;
+			case SELECTTARGET:
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR));
 				MouseHeader.mode = mouseMode.MENU;
 
-			} else if (currentMode == mouseMode.MENU) {
-
+				break;
+			case MENU:
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR));
-				MouseHeader.mode = mouseMode.MOVE;
+				MouseHeader.setMode(mouseMode.MOVEShot);
 
+				break;
+			default:
+				break;
 			}
 			timeMouse = cur;
 		}
@@ -41,7 +43,7 @@ public class MouseUtils {
 	}
 
 	public static boolean isModeForShoot() {
-		return MouseHeader.mode == mouseMode.ONLYSHOOT || MouseHeader.mode == mouseMode.MOVE;
+		return MouseHeader.mode == mouseMode.ONLYSHOOT || MouseHeader.mode == mouseMode.MOVEShot;
 	}
 
 }

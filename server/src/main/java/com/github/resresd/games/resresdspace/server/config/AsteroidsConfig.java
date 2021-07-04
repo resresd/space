@@ -13,8 +13,8 @@ public class AsteroidsConfig {
 	private @Getter @Setter double maxX = 10000D;
 
 	private @Getter @Setter double minY = -10000D;
-	private @Getter @Setter double maxY = 10000D;;
+	private @Getter @Setter double maxY = 10000D;
 
 	private @Getter @Setter double minZ = -10000D;
-	private @Getter @Setter double maxZ = 10000D;;
+	private @Getter @Setter double maxZ = 10000D;
 }

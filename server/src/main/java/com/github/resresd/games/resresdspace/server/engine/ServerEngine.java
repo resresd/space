@@ -26,6 +26,7 @@ import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
 import com.github.resresd.games.resresdspace.server.config.AsteroidsConfig;
 import com.github.resresd.games.resresdspace.server.config.ServerConfig;
+import com.github.resresd.games.resresdspace.server.config.ShipsConfig;
 import com.github.resresd.games.resresdspace.server.header.ServerHeader;
 import com.github.resresd.games.resresdspace.server.header.network.NetWorkHeader;
 import com.github.resresd.utils.NumberUtils;
@@ -92,15 +93,22 @@ public class ServerEngine extends Thread {
 			logger.info("localShips started");
 			while (active) {
 				try {
-					if (localShips.size() > 0) {
+					ShipsConfig shipConfig = ServerHeader.getServerConfig().getShipsConfig();
+
+					if (localShips.size() > shipConfig.getMaxCount()) {
 						Thread.sleep(100);
 						continue;
 					}
 					Ship ship = new Ship();
 					ship.setLastShotTime(0);
-					ship.getPosition().x = NumberUtils.randomDoubleInRange(-500, 500);
-					ship.getPosition().y = NumberUtils.randomDoubleInRange(-500, 500);
-					ship.getPosition().z = NumberUtils.randomDoubleInRange(-500, 500);
+
+					double x = NumberUtils.randomDoubleInRange(shipConfig.getMinX(), shipConfig.getMaxX());
+					double y = NumberUtils.randomDoubleInRange(shipConfig.getMinY(), shipConfig.getMaxY());
+					double z = NumberUtils.randomDoubleInRange(shipConfig.getMinZ(), shipConfig.getMaxZ());
+
+					ship.getPosition().x = x;
+					ship.getPosition().y = y;
+					ship.getPosition().z = z;
 
 					NetWorkHeader.sendBroadcast(ship);
 					localShips.add(ship);

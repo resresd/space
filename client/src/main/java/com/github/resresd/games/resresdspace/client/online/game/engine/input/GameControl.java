@@ -104,7 +104,7 @@ public class GameControl {
 			MouseUtils.changeModeNext();
 		}
 
-		if (MouseHeader.mode == mouseMode.MOVE) {
+		if (MouseHeader.mode == mouseMode.MOVEShot) {
 			double mouseX = MouseHeader.getMouseX();
 			double mouseY = MouseHeader.getMouseY();
 
