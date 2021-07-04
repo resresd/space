@@ -27,7 +27,11 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 
 	@Getter
 	@Setter
-	private Double health = 100.0D;
+	private Double healthMax = 2300.0D;
+
+	@Getter
+	@Setter
+	private Double health = (healthMax);
 
 	@Getter
 	Vector3d position = new Vector3d(0, 0, 10);
@@ -98,6 +102,16 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 			}
 		}
 		return false;
+	}
+
+	public static SpaceEntity getFromEngine(CopyOnWriteArrayList<Ship> localShips, SpaceEntity targetEntity) {
+		for (Ship ship : localShips) {
+			if (targetEntity.getId() == ship.getId()) {
+				// localShips.remove(ship);
+				return ship;
+			}
+		}
+		return null;
 	}
 
 }

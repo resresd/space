@@ -61,7 +61,6 @@ public class GameControl {
 		if (GameHeader.getKeyDown()[GLFW_KEY_D]) {
 			moveD();
 		}
-
 		if (GameHeader.getKeyDown()[GLFW_KEY_Q]) {
 			rotationByZ = -1.0f;
 		}
@@ -171,15 +170,17 @@ public class GameControl {
 			@Override
 			public void invoke(long window, int button, int action, int mods) {
 				if (button == GLFW_MOUSE_BUTTON_LEFT) {
-					if (action == GLFW_PRESS)
+					if (action == GLFW_PRESS) {
 						MouseHeader.setLeftMouseDown(true);
-					else if (action == GLFW_RELEASE)
+					} else if (action == GLFW_RELEASE) {
 						MouseHeader.setLeftMouseDown(false);
+					}
 				} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-					if (action == GLFW_PRESS)
+					if (action == GLFW_PRESS) {
 						MouseHeader.setRightMouseDown(true);
-					else if (action == GLFW_RELEASE)
+					} else if (action == GLFW_RELEASE) {
 						MouseHeader.setRightMouseDown(false);
+					}
 				}
 			}
 		});

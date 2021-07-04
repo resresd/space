@@ -20,18 +20,28 @@ public class MouseUtils {
 		boolean bool = ((cur - timeMouse) >= 2);
 		if (bool) {
 			if (currentMode == mouseMode.MOVE) {
+
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR));
 				MouseHeader.mode = mouseMode.SELECTTARGET;
+
 			} else if (currentMode == mouseMode.SELECTTARGET) {
+
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR));
 				MouseHeader.mode = mouseMode.MENU;
+
 			} else if (currentMode == mouseMode.MENU) {
+
 				glfwSetCursor(WindowHeader.getWindow(), glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR));
 				MouseHeader.mode = mouseMode.MOVE;
+
 			}
 			timeMouse = cur;
 		}
 
+	}
+
+	public static boolean isModeForShoot() {
+		return MouseHeader.mode == mouseMode.ONLYSHOOT || MouseHeader.mode == mouseMode.MOVE;
 	}
 
 }

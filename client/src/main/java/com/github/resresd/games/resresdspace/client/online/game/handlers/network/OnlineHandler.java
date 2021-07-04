@@ -6,7 +6,9 @@ import org.apache.mina.core.session.IoSession;
 import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
+import com.github.resresd.games.resresdspace.event.space.SpaceEntityDamageEvent;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
@@ -33,6 +35,19 @@ public class OnlineHandler extends IoHandlerAdapter {
 			SpaceEntityDestroyEvent spaceEntityDestroyEvent = (SpaceEntityDestroyEvent) message;
 			if (spaceEntityDestroyEvent.getTargetEntity().removeFromList(ClientGameEngine.localShips)) {
 			}
+		}
+		if (message instanceof SpaceEntityDamageEvent) {
+			SpaceEntityDamageEvent spaceEntityDamageEvent = (SpaceEntityDamageEvent) message;
+
+			SpaceEntity entityInEngine = SpaceEntity.getFromEngine(ClientGameEngine.localShips,
+					spaceEntityDamageEvent.getTargetEntity());
+
+			if (entityInEngine != null) {
+				entityInEngine.damage(spaceEntityDamageEvent.getDamage());
+			} else {
+				System.err.println("OnlineHandler:messageReceived:SpaceEntityDamageEvent:null");
+			}
+
 		}
 	}
 }

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
+import com.github.resresd.games.resresdspace.event.space.SpaceEntityDamageEvent;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
@@ -43,15 +44,12 @@ public class ServerEngine extends Thread {
 	private long lastTime = System.nanoTime();
 
 	// ########################################################
-	public static CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
-	public static CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
-	public static CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
+	public static final CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+	public static final CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
+	public static final CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
 
 	private static float shipRadius = 4.0F;
 	private static float maxShotLifetime = 4.0F;
-
-	static int a = 3000;
-	static int b = 210;
 
 	// ########################################################
 	// ########################################################ПОДГОТОВКА
@@ -94,15 +92,15 @@ public class ServerEngine extends Thread {
 			logger.info("localShips started");
 			while (active) {
 				try {
-					if (localShips.size() > 3) {
+					if (localShips.size() > 0) {
 						Thread.sleep(100);
 						continue;
 					}
 					Ship ship = new Ship();
 					ship.setLastShotTime(0);
-					ship.getPosition().x = NumberUtils.randomDoubleInRange(-50, 50);
-					ship.getPosition().y = NumberUtils.randomDoubleInRange(-50, 50);
-					ship.getPosition().z = NumberUtils.randomDoubleInRange(-50, 50);
+					ship.getPosition().x = NumberUtils.randomDoubleInRange(-500, 500);
+					ship.getPosition().y = NumberUtils.randomDoubleInRange(-500, 500);
+					ship.getPosition().z = NumberUtils.randomDoubleInRange(-500, 500);
 
 					NetWorkHeader.sendBroadcast(ship);
 					localShips.add(ship);
@@ -245,6 +243,11 @@ public class ServerEngine extends Thread {
 						SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
 						spaceEntityDestroyEvent.setTargetEntity(ship);
 
+						NetWorkHeader.sendBroadcast(spaceEntityDestroyEvent);
+					} else {
+						SpaceEntityDamageEvent spaceEntityDestroyEvent = new SpaceEntityDamageEvent();
+						spaceEntityDestroyEvent.setTargetEntity(ship);
+						spaceEntityDestroyEvent.setDamage(damage);
 						NetWorkHeader.sendBroadcast(spaceEntityDestroyEvent);
 					}
 

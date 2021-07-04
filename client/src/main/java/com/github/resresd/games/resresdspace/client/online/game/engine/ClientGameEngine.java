@@ -102,6 +102,7 @@ import static org.lwjgl.opengl.GL11.glTexCoordPointer;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL11.glTranslatef;
+import static org.lwjgl.opengl.GL11.glVertex2f;
 import static org.lwjgl.opengl.GL11.glVertex3f;
 import static org.lwjgl.opengl.GL11.glVertexPointer;
 import static org.lwjgl.opengl.GL11.glViewport;
@@ -132,7 +133,6 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.ServiceConfigurationError;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.joml.GeometryUtils;
@@ -151,18 +151,20 @@ import org.lwjgl.system.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.resresd.games.resresdspace.StaticData;
-import com.github.resresd.games.resresdspace.client.online.game.configs.ClientConfig;
 import com.github.resresd.games.resresdspace.client.online.game.engine.input.GameControl;
 import com.github.resresd.games.resresdspace.client.online.game.engine.window.GameShaders;
 import com.github.resresd.games.resresdspace.client.online.game.handlers.network.NetworkHandler;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
-import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader.mouseMode;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
 import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
+import com.github.resresd.games.resresdspace.client.online.game.utils.ConfigUtils;
+import com.github.resresd.games.resresdspace.client.online.game.utils.MouseUtils;
+import com.github.resresd.games.resresdspace.gui.menu.CoordUtils;
+import com.github.resresd.games.resresdspace.gui.menu.Element;
+import com.github.resresd.games.resresdspace.gui.menu.Layout;
+import com.github.resresd.games.resresdspace.gui.menu.Menu;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.VectorsDataObjectPairD;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
@@ -227,22 +229,7 @@ public class ClientGameEngine {
 
 	public void initConfig() throws IOException, NoSuchAlgorithmException {
 		logger.info("initConfig-start");
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		if (!GameHeader.getConfigFile().exists()) {
-			if (!GameHeader.getConfigFile().getParentFile().exists()) {
-				GameHeader.getConfigFile().getParentFile().mkdirs();
-			}
-			if (GameHeader.getConfigFile().createNewFile()) {
-
-			}
-			GameHeader.clientConfig.getPlayer().genNew();
-			mapper.writeValue(GameHeader.getConfigFile(), GameHeader.clientConfig);
-			throw new ServiceConfigurationError("please edit " + GameHeader.getConfigFile().getAbsolutePath());
-		}
-		GameHeader.setClientConfig(mapper.readValue(GameHeader.getConfigFile(), ClientConfig.class));
-		if (!GameHeader.getClientConfig().isPrepare()) {
-			throw new ServiceConfigurationError("please edit " + GameHeader.getConfigFile().getAbsolutePath());
-		}
+		ConfigUtils.initConfig();
 		logger.info("initConfig-end");
 	}
 
@@ -346,6 +333,26 @@ public class ClientGameEngine {
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		logger.info("init-menu-start");
+
+		//
+		int h = WindowHeader.getHeight();
+		int w = WindowHeader.getWidth();
+		//
+		menu.setProgram(0);
+		menu.setRealWindowHeight(h);
+		menu.setRealWindowWidth(w);
+		Layout layout = new Layout();
+		//
+		Element element = new Element(1, 0, 1, h);
+		Element element2 = new Element(20, 0, 20, h);
+
+		layout.getElementsHashMap().put(0, element);
+		layout.getElementsHashMap().put(1, element2);
+
+		//
+		menu.getLayoutsHashMap().put(0, layout);
+		logger.info("init-menu-end");
 		logger.info("init-end");
 	}
 
@@ -490,7 +497,7 @@ public class ClientGameEngine {
 		GameControl.updateControls();
 
 		if (MouseHeader.isLeftMouseDown() && (thisTime - lastShotTime >= 1E6 * shotMilliseconds)) {
-			if (MouseHeader.mode == mouseMode.MOVE) {
+			if (MouseUtils.isModeForShoot()) {
 				shoot();
 				lastShotTime = thisTime;
 			}
@@ -525,7 +532,7 @@ public class ClientGameEngine {
 					firstShot = true;
 				} else {
 					shotPosition.set(camera.right(tmp3)).mul(-shotSeparation).add(camera.position);
-					firstShot = false;//
+					firstShot = false;
 				}
 			}
 			//
@@ -764,6 +771,13 @@ public class ClientGameEngine {
 		}
 	}
 
+	Menu menu = new Menu();
+
+	private void drawMenu() {
+		menu.draw();
+
+	}
+
 	private void drawHudShip() {
 		if (WindowHeader.isHUDnabled()) {
 
@@ -808,8 +822,12 @@ public class ClientGameEngine {
 				if (targetOrigin.y > 1.0F) {
 					targetOrigin.y = 1.0F;
 				}
+
+				int realWindowHeight = WindowHeader.getHeight();
+				int realWindowWidth = WindowHeader.getWidth();
+
 				float crosshairSize = 0.03f;
-				float xs = crosshairSize * WindowHeader.getHeight() / WindowHeader.getWidth();
+				float xs = crosshairSize * realWindowHeight / realWindowWidth;
 				float ys = crosshairSize;
 				crosshairVerticesFloatBuffer.clear();
 				crosshairVerticesFloatBuffer.put(targetOrigin.x - xs).put(targetOrigin.y - ys);
@@ -821,6 +839,9 @@ public class ClientGameEngine {
 				glVertexPointer(2, GL_FLOAT, 0, crosshairVerticesFloatBuffer);
 				glDrawArrays(GL_QUADS, 0, 4);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+				drawHeal(enemyShip, targetOrigin, realWindowHeight, realWindowWidth);
+
 				// Draw distance text of enemy
 				int quads = stb_easy_font_print(0, 0, Integer.toString((int) (tmp3.length())), null, charBuffer);
 				glVertexPointer(2, GL_FLOAT, 16, charBuffer);
@@ -833,6 +854,39 @@ public class ClientGameEngine {
 				glPopMatrix();
 			}
 		}
+	}
+
+	private void drawHeal(Ship enemyShip, Vector3f targetOrigin, int realWindowHeight, int realWindowWidth) {
+		Double currentHealth = enemyShip.getHealth();
+		Double currentMax = enemyShip.getHealthMax();
+
+		float crosshairSize2 = 0.04f;
+		float xs2 = crosshairSize2 * realWindowHeight / realWindowWidth;
+		float ys2 = crosshairSize2;
+
+		// координаты экрана для GL
+		float x1 = targetOrigin.x - xs2;// ширина влево
+		float y1 = targetOrigin.y + ys2;// вверх (рамка + crosshairSize2)
+		float x2 = targetOrigin.x + xs2;// ширина вправо
+		float y2 = targetOrigin.y + ys2;// вверх (рамка + crosshairSize2)
+
+		// координаты экрана
+		float rx1 = CoordUtils.forRealCoordByGl(x1, realWindowWidth);
+		float rx2 = CoordUtils.forRealCoordByGl(x2, realWindowWidth);
+
+		Double maxLen = (double) rx2 - (double) rx1;
+		Double proc = 100 * currentHealth / currentMax;
+		Double curLen = proc / 100 * maxLen;
+
+		// длина полоски жизни
+		float healLen = (float) (rx1 + curLen);
+		// длина полоски жизни (-1><1)
+		float x2N = CoordUtils.forGlCoordByReal(healLen, realWindowWidth);
+
+		glBegin(GL_LINES);
+		glVertex2f(x1, y1);
+		glVertex2f(x2N, y2);
+		glEnd();
 	}
 
 	// ОБНОВЛЕНИЕ ЧАСТИЦ (И УДАЛЕНИЕ ПРИ .w<0 или .w > maxParticleLifetime)
@@ -851,6 +905,7 @@ public class ClientGameEngine {
 			// У частицы истекло время жизни
 			if (particleVelocity.w > maxParticleLifetime) {
 				particleVelocity.w = 0.0F;
+				particles.remove(particle);
 				continue;
 			}
 			particlePosition.set(newPosition);
@@ -963,6 +1018,7 @@ public class ClientGameEngine {
 		drawHudShotDirection();
 		drawHudShip();
 		drawVelocityCompass();
+		drawMenu();
 	}
 
 	private void loop() {
