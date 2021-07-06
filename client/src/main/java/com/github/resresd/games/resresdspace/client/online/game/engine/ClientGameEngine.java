@@ -1,9 +1,7 @@
 package com.github.resresd.games.resresdspace.client.online.game.engine;
 
-import static com.github.resresd.games.resresdspace.StaticData.asteroidMesh;
 import static com.github.resresd.games.resresdspace.StaticData.broadphase;
 import static com.github.resresd.games.resresdspace.StaticData.narrowphase;
-import static com.github.resresd.games.resresdspace.StaticData.shipMesh;
 import static com.github.resresd.games.resresdspace.StaticData.shipNormalVbo;
 import static com.github.resresd.games.resresdspace.StaticData.shipPositionVbo;
 import static com.github.resresd.games.resresdspace.StaticData.sphereMesh;
@@ -142,6 +140,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4d;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
@@ -165,10 +164,13 @@ import com.github.resresd.games.resresdspace.gui.menu.CoordUtils;
 import com.github.resresd.games.resresdspace.gui.menu.Element;
 import com.github.resresd.games.resresdspace.gui.menu.Layout;
 import com.github.resresd.games.resresdspace.gui.menu.Menu;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.VectorsDataObjectPairD;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
+import com.github.resresd.games.resresdspace.players.Player;
+import com.github.resresd.games.resresdspace.relations.Relation.relationType;
 
 public class ClientGameEngine {
 	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -177,7 +179,9 @@ public class ClientGameEngine {
 
 	private static float shotVelocity = 900.0F;
 	private static float shotSeparation = 0.8f;
+
 	private static int shotMilliseconds = 20;// ПЕРЕЗАРЯДКА своя
+
 	private static float maxShotLifetime = 4.0F;
 	private static float maxParticleLifetime = 1.0F;
 	private static float shotSize = 0.5f;
@@ -192,11 +196,12 @@ public class ClientGameEngine {
 	private int particleProgram;
 	private int particle_projUniform;
 
+	public static CopyOnWriteArrayList<SpaceEntity> spaceEntitys = new CopyOnWriteArrayList<>();
+
 	public static CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
 	public static CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
 
 	public static CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
-
 	public static CopyOnWriteArrayList<VectorsDataObjectPairD> particles = new CopyOnWriteArrayList<>();
 
 	public static boolean active;
@@ -265,7 +270,6 @@ public class ClientGameEngine {
 
 	private void init() throws IOException {
 		logger.info("init-start");
-		showHelpInfo();
 
 		if (!glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -283,8 +287,10 @@ public class ClientGameEngine {
 			WindowHeader.setFbWidth(WindowHeader.getWidth());
 			WindowHeader.setFbHeight(WindowHeader.getHeight());
 		}
-		WindowHeader.setWindow(glfwCreateWindow(WindowHeader.getWidth(), WindowHeader.getHeight(),
-				WindowHeader.getTitle(), !WindowHeader.isWindowed() ? monitor : 0L, NULL));
+
+		long window = glfwCreateWindow(WindowHeader.getWidth(), WindowHeader.getHeight(), WindowHeader.getTitle(),
+				!WindowHeader.isWindowed() ? monitor : 0L, NULL);
+		WindowHeader.setWindow(window);
 
 		if (WindowHeader.getWindow() == NULL) {
 			throw new AssertionError("Failed to create the GLFW window");
@@ -297,6 +303,7 @@ public class ClientGameEngine {
 		glfwSetWindowSizeCallback(WindowHeader.getWindow(), wsCallback = new GLFWWindowSizeCallback() {
 			@Override
 			public void invoke(long window, int width, int height) {
+
 				if (width > 0 && height > 0
 						&& (WindowHeader.getWidth() != width || WindowHeader.getHeight() != height)) {
 					WindowHeader.setWidth(width);
@@ -311,8 +318,10 @@ public class ClientGameEngine {
 
 		IntBuffer framebufferSize = BufferUtils.createIntBuffer(2);
 		nglfwGetFramebufferSize(WindowHeader.getWindow(), memAddress(framebufferSize), memAddress(framebufferSize) + 4);
+
 		WindowHeader.setFbWidth(framebufferSize.get(0));
 		WindowHeader.setFbHeight(framebufferSize.get(1));
+
 		caps = GL.createCapabilities();
 		if (!caps.OpenGL20) {
 			throw new AssertionError("Requires OpenGL 2.0.");
@@ -323,8 +332,10 @@ public class ClientGameEngine {
 		createCubemapTexture();
 		createFullScreenQuad();
 		createCubemapProgram();
+
 		createShipProgram();
 		createParticleProgram();
+
 		createShip();
 		createAsteroid();
 		createShotProgram();
@@ -353,10 +364,13 @@ public class ClientGameEngine {
 		//
 		menu.getLayoutsHashMap().put(0, layout);
 		logger.info("init-menu-end");
+
 		logger.info("init-end");
 	}
 
 	public static void createShip() {
+		Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
+
 		shipPositionVbo = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, shipPositionVbo);
 		glBufferData(GL_ARRAY_BUFFER, shipMesh.positions, GL_STATIC_DRAW);
@@ -367,22 +381,13 @@ public class ClientGameEngine {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	private void showHelpInfo() {
-		logger.info("showHelpInfo-start");
-		System.out.println("Press W/S to move forward/backward");
-		System.out.println("Press L.Ctrl/Spacebar to move down/up");
-		System.out.println("Press A/D to strafe left/right");
-		System.out.println("Press Q/E to roll left/right");
-		System.out.println("Hold the left mouse button to shoot");
-		System.out.println("Hold the right mouse button to rotate towards the mouse cursor");
-		logger.info("showHelpInfo-end");
-	}
-
 	public void startNetwork() throws InterruptedException {
 		NetworkHandler.startNetwork();
 	}
 
 	private void createAsteroid() {
+		Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
+
 		asteroidPositionVbo = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, asteroidPositionVbo);
 		glBufferData(GL_ARRAY_BUFFER, asteroidMesh.positions, GL_STATIC_DRAW);
@@ -567,6 +572,7 @@ public class ClientGameEngine {
 				modelMatrix.translation(x, y, z);
 				modelMatrix.scale(radius);
 
+				Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
 				glUniformMatrix4fv(ship_modelUniform, false, modelMatrix.get(matrixBuffer));
 				glDrawArrays(GL_TRIANGLES, 0, shipMesh.numVertices);
 			}
@@ -835,10 +841,37 @@ public class ClientGameEngine {
 				crosshairVerticesFloatBuffer.put(targetOrigin.x + xs).put(targetOrigin.y + ys);
 				crosshairVerticesFloatBuffer.put(targetOrigin.x - xs).put(targetOrigin.y + ys);
 				crosshairVerticesFloatBuffer.flip();
+
+				Player player = GameHeader.getClientConfig().getPlayer();
+				relationType relation = GameHeader.getRelationHandler().checkRel(player, enemyShip);
+
+				boolean own = false;
+				boolean friend = false;
+				boolean enemy = false;
+
+				if (relation == relationType.OWN) {
+					own = true;
+				} else if (relation == relationType.FRIEND) {
+					friend = true;
+				} else if (relation == relationType.ENEMY) {
+					enemy = true;
+				}
+
+				if (own) {
+					glColor4f(0.0f, 1.0f, 1.0f, 0.0f);// Red.g.b.a
+				} else if (friend) {
+					glColor4f(0.0f, 1.0f, 0.0f, 0.0f);// r.Green.b.a
+				} else if (enemy) {
+					glColor4f(1.0f, 0.0f, 0.0f, 0.0f);// Red.g.b.a
+				}
+
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				glVertexPointer(2, GL_FLOAT, 0, crosshairVerticesFloatBuffer);
 				glDrawArrays(GL_QUADS, 0, 4);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+				// clear collor
+				glColor4f(1.0f, 1.0f, 1.0f, 0.0f);// white
 
 				drawHeal(enemyShip, targetOrigin, realWindowHeight, realWindowWidth);
 
@@ -884,8 +917,10 @@ public class ClientGameEngine {
 		float x2N = CoordUtils.forGlCoordByReal(healLen, realWindowWidth);
 
 		glBegin(GL_LINES);
+		glColor4f(1.0f, 0.0f, 0.0f, 0.0f);// red
 		glVertex2f(x1, y1);
 		glVertex2f(x2N, y2);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.0f);// white
 		glEnd();
 	}
 
@@ -938,6 +973,7 @@ public class ClientGameEngine {
 				}
 
 				float shipRadius = ship.getShipRadius();
+				Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
 
 				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
@@ -954,6 +990,7 @@ public class ClientGameEngine {
 				if (asteroid2 == null) {
 					continue;
 				}
+				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
 
 				if (broadphase(asteroid2.getPosition().x, asteroid2.getPosition().y, asteroid2.getPosition().z,
 						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)

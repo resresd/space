@@ -8,6 +8,8 @@ import lombok.Setter;
 
 public class Asteroid extends SpaceEntity {
 
+	private static final long serialVersionUID = 1265659135993575513L;
+
 	public Asteroid() {
 		super();
 	}

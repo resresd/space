@@ -1,6 +1,7 @@
 package com.github.resresd.games.resresdspace.client.online.game.header;
 
 import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
@@ -9,6 +10,8 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import com.github.resresd.games.resresdspace.client.online.game.configs.ClientConfig;
 import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
 import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
+import com.github.resresd.games.resresdspace.relations.Relation;
+import com.github.resresd.games.resresdspace.relations.RelationshipHandler;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +19,14 @@ import lombok.Setter;
 public class GameHeader {
 	private GameHeader() {
 	}
+
+	// максимальная скорость
+	private static @Getter float maxLinearVel = 20000.0F;
+
+	private static @Getter float mainThrusterAccFactor = 50.0F;
+	private static @Getter float straveThrusterAccFactor = 20.0F;
+
+	private static @Getter boolean[] keyDown = new boolean[GLFW.GLFW_KEY_LAST];
 
 	@Getter
 	private static File rootDir = new File("clientFiles");
@@ -27,37 +38,14 @@ public class GameHeader {
 
 	// ENGINE
 	public static ClientGameEngine onlinegame = new ClientGameEngine();
-
 	// ENGINE
-
-	// WINDOW HEADER
-	// WindowHeader windowHeader = new WindowHeader();
-	// WINDOW HEADER
-
-	// CONTROL HEADER
-	// @Getter
-	// private static ControlHeader controlHeader = new ControlHeader();
-	// CONTROL HEADER
 
 	public static SpaceCamera camera = new SpaceCamera();
 
-	@Getter
-	private static boolean[] keyDown = new boolean[GLFW.GLFW_KEY_LAST];
+	private static @Getter @Setter GLFWKeyCallback keyCallback;
+	private static @Getter @Setter GLFWFramebufferSizeCallback fbCallback;
 
-	@Getter
-	private static float mainThrusterAccFactor = 50.0F;
-	@Getter
-	private static float straveThrusterAccFactor = 20.0F;
-	@Getter
-
-	// максимальная скорость
-	private static float maxLinearVel = 20000.0F;
-
-	@Getter
-	@Setter
-	private static GLFWKeyCallback keyCallback;
-	@Getter
-	@Setter
-	private static GLFWFramebufferSizeCallback fbCallback;
+	private static final @Getter ConcurrentHashMap<String, Relation> REALTIONS_MAP = new ConcurrentHashMap<>();
+	private static final @Getter RelationshipHandler relationHandler = new RelationshipHandler(REALTIONS_MAP);
 
 }

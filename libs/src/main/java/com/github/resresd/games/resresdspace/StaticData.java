@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.joml.GeometryUtils;
@@ -16,6 +17,9 @@ import org.lwjgl.demo.util.WavefrontMeshLoader;
 import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
+import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 
 import lombok.Getter;
 
@@ -31,11 +35,9 @@ public class StaticData {
 	public static float shotVelocity = 150.0F;
 	public static int shotOpponentMilliseconds = 200;// ПЕРЕЗАРЯДКА У ДРУГИХ
 
-	public static Mesh shipMesh;
+	// public static Mesh shipMesh;
 	public static int shipPositionVbo;
 	public static int shipNormalVbo;
-
-	public static Mesh asteroidMesh;
 
 	public static Mesh sphereMesh;
 
@@ -121,11 +123,16 @@ public class StaticData {
 		return intersects;
 	}
 
+	private static final @Getter ConcurrentHashMap<Class<?>, Mesh> MESHS_MAP = new ConcurrentHashMap<>();
+
 	public static void init() throws IOException {
+
 		// LOAD MESHs
 		WavefrontMeshLoader loader = new WavefrontMeshLoader();
-		shipMesh = loader.loadMesh("org/lwjgl/demo/game/ship.obj.zip");
-		asteroidMesh = loader.loadMesh("org/lwjgl/demo/game/asteroid.obj.zip");
+
+		MESHS_MAP.put(Ship.class, loader.loadMesh("org/lwjgl/demo/game/ship.obj.zip"));
+		MESHS_MAP.put(Asteroid.class, loader.loadMesh("org/lwjgl/demo/game/asteroid.obj.zip"));
+
 		sphereMesh = loader.loadMesh("org/lwjgl/demo/game/sphere.obj.zip");
 		// LOAD MESHs
 	}

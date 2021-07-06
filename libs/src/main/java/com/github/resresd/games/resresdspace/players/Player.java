@@ -7,6 +7,7 @@ import java.security.PublicKey;
 import java.util.Base64;
 import java.util.UUID;
 
+import com.github.resresd.games.resresdspace.races.Race;
 import com.github.resresd.utils.RSAKeyPairGenerator;
 
 import lombok.Getter;
@@ -15,12 +16,11 @@ import lombok.Setter;
 public class Player implements Serializable {
 
 	private static final long serialVersionUID = 5154561528134995928L;
-	@Getter
-	@Setter
-	String uid = UUID.randomUUID().toString();
-	@Getter
-	@Setter
-	String userName = "username-" + UUID.randomUUID().toString();
+	private @Getter @Setter String uuid = UUID.randomUUID().toString();
+	private @Getter @Setter String userName = "username-" + System.currentTimeMillis();
+
+	private @Getter @Setter Race race;
+
 	@Getter
 	@Setter
 	transient String privKey;

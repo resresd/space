@@ -6,6 +6,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.utils.NumberUtils;
@@ -17,13 +18,17 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 
 	private static final long serialVersionUID = -3968104750159381671L;
 
-	@Getter
-	@Setter
-	int id;
+	private @Getter @Setter int id;
+	private @Getter @Setter String owner;
 
 	public SpaceEntity() {
 		setId(NumberUtils.randomIntInRange(1, Integer.MAX_VALUE));
+
+		// TODO AUTO SET MESH
 	}
+
+	private @Getter @Setter Mesh mesh;
+	private @Getter @Setter float radius = 4.0F;
 
 	@Getter
 	@Setter
@@ -67,16 +72,7 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 		if (health != 0D) {
 			health = 0D;
 		}
-		removeFromAll(this);
 		spawnResource();
-	}
-
-	private void removeFromAll(SpaceEntity spaceEntity) {
-		// УДАЛЯЕМ СО ВСЕХ ИСТОЧНИКОВ
-		// FIXME ПРОВЕРИТЬ РАБОТУ
-		// containers.parallelStream().filter(list -> list.contains(this)).forEach(l ->
-		// l.remove(this));
-
 	}
 
 	@Override
@@ -95,23 +91,15 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 	}
 
 	public boolean removeFromList(CopyOnWriteArrayList<Ship> localShips) {
-		for (Ship ship : localShips) {
-			if (id == ship.getId()) {
-				localShips.remove(ship);
-				return true;
-			}
-		}
-		return false;
+		return localShips.remove(getFromEngine(localShips, this));
 	}
 
 	public static SpaceEntity getFromEngine(CopyOnWriteArrayList<Ship> localShips, SpaceEntity targetEntity) {
 		for (Ship ship : localShips) {
 			if (targetEntity.getId() == ship.getId()) {
-				// localShips.remove(ship);
 				return ship;
 			}
 		}
 		return null;
 	}
-
 }

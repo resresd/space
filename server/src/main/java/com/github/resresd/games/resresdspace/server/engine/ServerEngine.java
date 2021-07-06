@@ -1,9 +1,7 @@
 package com.github.resresd.games.resresdspace.server.engine;
 
-import static com.github.resresd.games.resresdspace.StaticData.asteroidMesh;
 import static com.github.resresd.games.resresdspace.StaticData.broadphase;
 import static com.github.resresd.games.resresdspace.StaticData.narrowphase;
-import static com.github.resresd.games.resresdspace.StaticData.shipMesh;
 import static com.github.resresd.games.resresdspace.StaticData.tmpUsedForPossition;
 
 import java.lang.invoke.MethodHandles;
@@ -14,6 +12,7 @@ import org.joml.GeometryUtils;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +20,7 @@ import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDamageEvent;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
@@ -32,6 +32,7 @@ import com.github.resresd.games.resresdspace.server.header.network.NetWorkHeader
 import com.github.resresd.utils.NumberUtils;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 public class ServerEngine extends Thread {
@@ -45,11 +46,11 @@ public class ServerEngine extends Thread {
 	private long lastTime = System.nanoTime();
 
 	// ########################################################
+	private static final CopyOnWriteArrayList<SpaceEntity> SPACE_ENTITIES = new CopyOnWriteArrayList<>();
 	public static final CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
 	public static final CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
 	public static final CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
 
-	private static float shipRadius = 4.0F;
 	private static float maxShotLifetime = 4.0F;
 
 	// ########################################################
@@ -146,11 +147,8 @@ public class ServerEngine extends Thread {
 	}
 
 	// SHOOT
-	private void shootFromShip(long thisTime, Ship ship) {
+	private void shootFromShip(long thisTime, @NonNull Ship ship) {
 		try {
-			if (ship == null) {
-				return;
-			}
 
 			if (thisTime - ship.lastShotTime < 1E6 * StaticData.shotOpponentMilliseconds) {
 				return;
@@ -170,6 +168,9 @@ public class ServerEngine extends Thread {
 
 			Vector3d position = targetShip.getPosition();
 			Vector3f linearVel = targetShip.getLinearVel();
+
+			// TODO REPLACE to CALL
+			float shipRadius = 4.0F;
 
 			Vector3d shotPos = tmpUsedForPossition.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z)
 					.sub(position).negate().normalize().mul(1.01f * shipRadius)
@@ -234,10 +235,38 @@ public class ServerEngine extends Thread {
 			}
 			/* Test against ships */
 
+			for (SpaceEntity spaceEntity : SPACE_ENTITIES) {
+				if (spaceEntity == null) {
+					logger.warn("For:spaceEntity is null");
+					continue;
+				}
+				Vector3d spaceEntityPosition = spaceEntity.getPosition();
+				double posX = spaceEntityPosition.x();
+				double posY = spaceEntityPosition.y();
+				double posZ = spaceEntityPosition.z();
+
+				Mesh mesh = spaceEntity.getMesh();
+				float boundingSphereRadius = mesh.boundingSphereRadius;
+				FloatBuffer meshPos = mesh.positions;
+
+				float radius = spaceEntity.getRadius();
+
+				if (broadphase(posX, posY, posZ, boundingSphereRadius, radius, projectilePosition, newPosition)
+						&& narrowphase(meshPos, posX, posY, posZ, radius, projectilePosition, newPosition,
+								tmpUsedForPossition, StaticData.usedForNarmal)) {
+					System.err.println("aaa2");
+
+				}
+			}
+
 			for (Ship ship : localShips) {
 				if (ship == null) {
 					continue;
 				}
+				// TODO REPLACE to CALL
+				float shipRadius = 4.0F;
+				Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
+
 				// СТОЛКНОВЕНИЕ СНАРЯДА С Кораблями
 				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
 						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
@@ -278,6 +307,8 @@ public class ServerEngine extends Thread {
 				double aPosX = asteroidPos.x;
 				double aPosY = asteroidPos.y;
 				double aPosZ = asteroidPos.z;
+
+				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
 
 				float asteroidScale = asteroid2.scale;
 				float asteroidMeshRadius = asteroidMesh.boundingSphereRadius;

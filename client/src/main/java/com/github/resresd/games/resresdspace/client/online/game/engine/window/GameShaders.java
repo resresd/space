@@ -1,6 +1,5 @@
 package com.github.resresd.games.resresdspace.client.online.game.engine.window;
 
-import static com.github.resresd.games.resresdspace.StaticData.asteroidMesh;
 import static com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine.localAsteroids;
 import static org.lwjgl.demo.util.IOUtils.ioResourceToByteBuffer;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
@@ -41,7 +40,9 @@ import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 
+import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 
@@ -95,6 +96,8 @@ public class GameShaders {
 			float y = (float) (asteroid2.getPosition().y - GameHeader.camera.position.y);
 			float z = (float) (asteroid2.getPosition().z - GameHeader.camera.position.z);
 			if (frustumIntersection.testSphere(x, y, z, asteroid2.scale)) {
+				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
+
 				modelMatrix.translation(x, y, z);
 				modelMatrix.scale(asteroid2.scale);
 				glUniformMatrix4fv(ship_modelUniform, false, modelMatrix.get(matrixBuffer));
