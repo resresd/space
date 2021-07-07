@@ -2,7 +2,7 @@ package com.github.resresd.games.resresdspace.relations;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.players.Player;
 import com.github.resresd.games.resresdspace.races.Race;
 import com.github.resresd.games.resresdspace.relations.Relation.relationType;
@@ -17,10 +17,10 @@ public class RelationshipHandler {
 		relData = realtionsMap;
 	}
 
-	public relationType checkRel(Player player, Ship ship) {
+	public relationType checkRel(Player player, SpaceEntity ship) {
 		String shipOwner = ship.getOwner();
 		// корабль игрока
-		if (player.equals(shipOwner)) {
+		if (player.getUuid().equals(shipOwner)) {
 			return Relation.relationType.OWN;
 		}
 
@@ -28,5 +28,4 @@ public class RelationshipHandler {
 
 		return relationType.NA;
 	}
-
 }

@@ -1,6 +1,5 @@
 package com.github.resresd.games.resresdspace.client.online.game.engine.window;
 
-import static com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine.localAsteroids;
 import static org.lwjgl.demo.util.IOUtils.ioResourceToByteBuffer;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_NORMAL_ARRAY;
@@ -43,7 +42,9 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 
 import com.github.resresd.games.resresdspace.StaticData;
+import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 
 import lombok.Getter;
@@ -88,19 +89,23 @@ public class GameShaders {
 		glNormalPointer(GL_FLOAT, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		for (Asteroid asteroid2 : localAsteroids) {
-			if (asteroid2 == null) {
+		for (SpaceEntity spaceEntity : ClientGameEngine.getSPACE_ENTITIES()) {
+			if (spaceEntity == null) {
 				continue;
 			}
-			float x = (float) (asteroid2.getPosition().x - GameHeader.camera.position.x);
-			float y = (float) (asteroid2.getPosition().y - GameHeader.camera.position.y);
-			float z = (float) (asteroid2.getPosition().z - GameHeader.camera.position.z);
-			if (frustumIntersection.testSphere(x, y, z, asteroid2.scale)) {
-				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
+			if (!(spaceEntity instanceof Asteroid)) {
+				continue;
+			}
+			float x = (float) (spaceEntity.getPosition().x - GameHeader.camera.position.x);
+			float y = (float) (spaceEntity.getPosition().y - GameHeader.camera.position.y);
+			float z = (float) (spaceEntity.getPosition().z - GameHeader.camera.position.z);
+			if (frustumIntersection.testSphere(x, y, z, spaceEntity.scale)) {
+				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(spaceEntity.getClass());
 
 				modelMatrix.translation(x, y, z);
-				modelMatrix.scale(asteroid2.scale);
+				modelMatrix.scale(spaceEntity.scale);
 				glUniformMatrix4fv(ship_modelUniform, false, modelMatrix.get(matrixBuffer));
+
 				glDrawArrays(GL_TRIANGLES, 0, asteroidMesh.numVertices);
 			}
 		}

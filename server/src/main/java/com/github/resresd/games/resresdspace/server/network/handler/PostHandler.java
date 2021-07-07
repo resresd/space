@@ -8,8 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.resresd.games.resresdspace.network.packets.ReadyPacket;
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
 import com.github.resresd.games.resresdspace.server.engine.ServerEngine;
 
@@ -35,13 +34,10 @@ public class PostHandler extends IoHandlerAdapter {
 
 				@Override
 				public void run() {
-					// TODO Auto-generated method stub
-					for (Ship ship : ServerEngine.localShips) {
-						session.write(ship);
+					for (SpaceEntity spaceEntity : ServerEngine.getSPACE_ENTITIES()) {
+						session.write(spaceEntity);
 					}
-					for (Asteroid asteroid : ServerEngine.localAsteroids) {
-						session.write(asteroid);
-					}
+
 				}
 			}).start();
 		}

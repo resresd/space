@@ -9,37 +9,28 @@ import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDamageEvent;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
 
 public class OnlineHandler extends IoHandlerAdapter {
 	@Override
 	public void messageReceived(IoSession session, Object message) throws Exception {
-		if (message instanceof Ship) {
-			ClientGameEngine.localShips.add((Ship) message);
+		if (message instanceof SpaceEntity) {
+			if (message instanceof Shot) {
+				Shot shot = (Shot) message;
+				ClientGameEngine.directShots.add(shot);
+				return;
+			}
+			ClientGameEngine.getSPACE_ENTITIES().add((SpaceEntity) message);
 		}
-		if (message instanceof Asteroid) {
-			Asteroid asteroid = (Asteroid) message;
-			ClientGameEngine.localAsteroids.add(asteroid);
-		}
-		if (message instanceof Shot) {
-			Shot shot = (Shot) message;
-			ClientGameEngine.directShots.add(shot);
-		}
+
 		if (message instanceof EmitExplosionPacket) {
+			System.err.println("EmitExplosionPacket");
 			EmitExplosionPacket emitExplosionPacket = (EmitExplosionPacket) message;
 			GameHeader.onlinegame.emitExplosion(emitExplosionPacket.getPosition(), emitExplosionPacket.getNormal());
 		}
-		if (message instanceof SpaceEntityDestroyEvent) {
-			SpaceEntityDestroyEvent spaceEntityDestroyEvent = (SpaceEntityDestroyEvent) message;
-			if (spaceEntityDestroyEvent.getTargetEntity().removeFromList(ClientGameEngine.localShips)) {
-			}
-		}
 		if (message instanceof SpaceEntityDamageEvent) {
 			SpaceEntityDamageEvent spaceEntityDamageEvent = (SpaceEntityDamageEvent) message;
-
-			SpaceEntity entityInEngine = SpaceEntity.getFromEngine(ClientGameEngine.localShips,
+			SpaceEntity entityInEngine = SpaceEntity.getFromEngine(ClientGameEngine.getSPACE_ENTITIES(),
 					spaceEntityDamageEvent.getTargetEntity());
 
 			if (entityInEngine != null) {
@@ -49,5 +40,13 @@ public class OnlineHandler extends IoHandlerAdapter {
 			}
 
 		}
+		if (message instanceof SpaceEntityDestroyEvent) {
+			SpaceEntityDestroyEvent spaceEntityDestroyEvent = (SpaceEntityDestroyEvent) message;
+			SpaceEntity entity = spaceEntityDestroyEvent.getTargetEntity();
+
+			if (entity.removeFromList(ClientGameEngine.getSPACE_ENTITIES())) {
+			}
+		}
+
 	}
 }

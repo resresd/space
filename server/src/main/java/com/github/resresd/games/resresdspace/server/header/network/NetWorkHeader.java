@@ -22,7 +22,6 @@ public class NetWorkHeader {
 		if (tcpAcceptor != null) {
 			tcpAcceptor.broadcast(object);
 		}
-
 	}
 
 }

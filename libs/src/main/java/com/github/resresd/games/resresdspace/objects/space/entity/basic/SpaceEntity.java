@@ -8,7 +8,6 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.demo.util.WavefrontMeshLoader.Mesh;
 
-import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.utils.NumberUtils;
 
 import lombok.Getter;
@@ -28,11 +27,15 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 	}
 
 	private @Getter @Setter Mesh mesh;
-	private @Getter @Setter float radius = 4.0F;
+	// private @Getter @Setter float radius = 4.0F;
 
 	@Getter
 	@Setter
-	private Double healthMax = 2300.0D;
+	public float scale;
+
+	@Getter
+	@Setter
+	private Double healthMax = 100.0D;
 
 	@Getter
 	@Setter
@@ -90,12 +93,12 @@ public class SpaceEntity implements Serializable, SpaceEntityInterface {
 		return false;
 	}
 
-	public boolean removeFromList(CopyOnWriteArrayList<Ship> localShips) {
+	public boolean removeFromList(CopyOnWriteArrayList<SpaceEntity> localShips) {
 		return localShips.remove(getFromEngine(localShips, this));
 	}
 
-	public static SpaceEntity getFromEngine(CopyOnWriteArrayList<Ship> localShips, SpaceEntity targetEntity) {
-		for (Ship ship : localShips) {
+	public static SpaceEntity getFromEngine(CopyOnWriteArrayList<SpaceEntity> localShips, SpaceEntity targetEntity) {
+		for (SpaceEntity ship : localShips) {
 			if (targetEntity.getId() == ship.getId()) {
 				return ship;
 			}

@@ -13,8 +13,6 @@ public class Ship extends SpaceEntity {
 		super();
 	}
 
-	private @Getter @Setter float shipRadius = 4.0F;
-
 	@Getter
 	@Setter
 	public long lastShotTime;

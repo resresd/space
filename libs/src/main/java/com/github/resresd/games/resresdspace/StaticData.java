@@ -132,6 +132,8 @@ public class StaticData {
 
 		MESHS_MAP.put(Ship.class, loader.loadMesh("org/lwjgl/demo/game/ship.obj.zip"));
 		MESHS_MAP.put(Asteroid.class, loader.loadMesh("org/lwjgl/demo/game/asteroid.obj.zip"));
+		// TODO MESHS_MAP.put(Shot.class,
+		// loader.loadMesh("org/lwjgl/demo/game/asteroid.obj.zip"));
 
 		sphereMesh = loader.loadMesh("org/lwjgl/demo/game/sphere.obj.zip");
 		// LOAD MESHs

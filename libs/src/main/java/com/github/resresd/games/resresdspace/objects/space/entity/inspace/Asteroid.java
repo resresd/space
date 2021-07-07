@@ -3,9 +3,6 @@ package com.github.resresd.games.resresdspace.objects.space.entity.inspace;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.utils.NumberUtils;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class Asteroid extends SpaceEntity {
 
 	private static final long serialVersionUID = 1265659135993575513L;
@@ -13,10 +10,6 @@ public class Asteroid extends SpaceEntity {
 	public Asteroid() {
 		super();
 	}
-
-	@Getter
-	@Setter
-	public float scale;
 
 	public static float generateSize(float min, float max) {
 		return NumberUtils.randomFloatInRange(min, max);

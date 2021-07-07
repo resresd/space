@@ -36,22 +36,19 @@ import lombok.NonNull;
 import lombok.Setter;
 
 public class ServerEngine extends Thread {
-	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	// ########################################################
+	private static final @Getter CopyOnWriteArrayList<SpaceEntity> SPACE_ENTITIES = new CopyOnWriteArrayList<>();
 
+	public static final CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
+	private static float maxShotLifetime = 4.0F;
+	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	@Getter
 	@Setter
 	boolean active = true;
+
 	@Getter
 	@Setter
 	private long lastTime = System.nanoTime();
-
-	// ########################################################
-	private static final CopyOnWriteArrayList<SpaceEntity> SPACE_ENTITIES = new CopyOnWriteArrayList<>();
-	public static final CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
-	public static final CopyOnWriteArrayList<Asteroid> localAsteroids = new CopyOnWriteArrayList<>();
-	public static final CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
-
-	private static float maxShotLifetime = 4.0F;
 
 	// ########################################################
 	// ########################################################ПОДГОТОВКА
@@ -85,7 +82,7 @@ public class ServerEngine extends Thread {
 				asteroid.getPosition().y = NumberUtils.randomDoubleInRange(minY, maxY);
 				asteroid.getPosition().z = NumberUtils.randomDoubleInRange(minZ, maxZ);
 
-				localAsteroids.add(asteroid);
+				SPACE_ENTITIES.add(asteroid);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -95,6 +92,13 @@ public class ServerEngine extends Thread {
 			while (active) {
 				try {
 					ShipsConfig shipConfig = ServerHeader.getServerConfig().getShipsConfig();
+					CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+
+					for (Object object : SPACE_ENTITIES) {
+						if (object instanceof Ship) {
+							localShips.add((Ship) object);
+						}
+					}
 
 					if (localShips.size() > shipConfig.getMaxCount()) {
 						Thread.sleep(100);
@@ -102,6 +106,9 @@ public class ServerEngine extends Thread {
 					}
 					Ship ship = new Ship();
 					ship.setLastShotTime(0);
+
+					// TEST
+					ship.setScale(4.0F);
 
 					double x = NumberUtils.randomDoubleInRange(shipConfig.getMinX(), shipConfig.getMaxX());
 					double y = NumberUtils.randomDoubleInRange(shipConfig.getMinY(), shipConfig.getMaxY());
@@ -112,7 +119,7 @@ public class ServerEngine extends Thread {
 					ship.getPosition().z = z;
 
 					NetWorkHeader.sendBroadcast(ship);
-					localShips.add(ship);
+					SPACE_ENTITIES.add(ship);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -123,14 +130,6 @@ public class ServerEngine extends Thread {
 		logger.info("init-end");
 	}
 
-	// ########################################################
-	@Override
-	public void run() {
-		logger.info("run-start");
-		loop();
-		logger.info("run-end");
-	}
-
 	private void loop() {
 		logger.info("loop-start");
 		while (active) {
@@ -139,11 +138,27 @@ public class ServerEngine extends Thread {
 			lastTime = thisTime;
 
 			update(deltaTime);
+
+			CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+			for (Object object : SPACE_ENTITIES) {
+				if (object instanceof Ship) {
+					localShips.add((Ship) object);
+				}
+			}
 			for (Ship localShip : localShips) {
 				shootFromShip(thisTime, localShip);
 			}
+
 		}
 		logger.info("loop-end");
+	}
+
+	// ########################################################
+	@Override
+	public void run() {
+		logger.info("run-start");
+		loop();
+		logger.info("run-end");
 	}
 
 	// SHOOT
@@ -156,6 +171,14 @@ public class ServerEngine extends Thread {
 
 			ship.lastShotTime = thisTime;
 
+			CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+
+			for (Object object : SPACE_ENTITIES) {
+				if (object instanceof Ship) {
+					localShips.add((Ship) object);
+				}
+			}
+			System.err.println(localShips.size());
 			if (localShips.size() <= 1) {
 				return;
 			}
@@ -169,8 +192,8 @@ public class ServerEngine extends Thread {
 			Vector3d position = targetShip.getPosition();
 			Vector3f linearVel = targetShip.getLinearVel();
 
-			// TODO REPLACE to CALL
-			float shipRadius = 4.0F;
+			// getRadius
+			float shipRadius = targetShip.getScale();
 
 			Vector3d shotPos = tmpUsedForPossition.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z)
 					.sub(position).negate().normalize().mul(1.01f * shipRadius)
@@ -211,6 +234,10 @@ public class ServerEngine extends Thread {
 		updateRockets(deltaTime);
 	}
 
+	// updateRockets
+	private void updateRockets(double deltaTime) {
+	}
+
 	private void updateShots(double deltaTime) {
 		projectiles:
 
@@ -233,7 +260,6 @@ public class ServerEngine extends Thread {
 				directShots.remove(shot);
 				continue;
 			}
-			/* Test against ships */
 
 			for (SpaceEntity spaceEntity : SPACE_ENTITIES) {
 				if (spaceEntity == null) {
@@ -245,95 +271,42 @@ public class ServerEngine extends Thread {
 				double posY = spaceEntityPosition.y();
 				double posZ = spaceEntityPosition.z();
 
-				Mesh mesh = spaceEntity.getMesh();
+				Mesh mesh = StaticData.getMESHS_MAP().get(spaceEntity.getClass());
 				float boundingSphereRadius = mesh.boundingSphereRadius;
 				FloatBuffer meshPos = mesh.positions;
 
-				float radius = spaceEntity.getRadius();
+				float scale = spaceEntity.scale;
 
-				if (broadphase(posX, posY, posZ, boundingSphereRadius, radius, projectilePosition, newPosition)
-						&& narrowphase(meshPos, posX, posY, posZ, radius, projectilePosition, newPosition,
+				if (broadphase(posX, posY, posZ, boundingSphereRadius, scale, projectilePosition, newPosition)
+						&& narrowphase(meshPos, posX, posY, posZ, scale, projectilePosition, newPosition,
 								tmpUsedForPossition, StaticData.usedForNarmal)) {
-					System.err.println("aaa2");
-
-				}
-			}
-
-			for (Ship ship : localShips) {
-				if (ship == null) {
-					continue;
-				}
-				// TODO REPLACE to CALL
-				float shipRadius = 4.0F;
-				Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
-
-				// СТОЛКНОВЕНИЕ СНАРЯДА С Кораблями
-				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
-						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
-						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
-								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmpUsedForPossition,
-								StaticData.usedForNarmal)) {
-
-					if (ship.damage(damage)) {
-						localShips.remove(ship);
-						System.err.println(ship + " уничтожен");
+					if (false) {
+						System.err.println("for SPACE_ENTITIES broadphase&&narrowphase: " + spaceEntity);
+					}
+					if (spaceEntity.damage(damage)) {
+						SPACE_ENTITIES.remove(spaceEntity);
+						System.err.println(spaceEntity + " уничтожен");
 						SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
-						spaceEntityDestroyEvent.setTargetEntity(ship);
+						spaceEntityDestroyEvent.setTargetEntity(spaceEntity);
 
 						NetWorkHeader.sendBroadcast(spaceEntityDestroyEvent);
 					} else {
-						SpaceEntityDamageEvent spaceEntityDestroyEvent = new SpaceEntityDamageEvent();
-						spaceEntityDestroyEvent.setTargetEntity(ship);
-						spaceEntityDestroyEvent.setDamage(damage);
-						NetWorkHeader.sendBroadcast(spaceEntityDestroyEvent);
+						SpaceEntityDamageEvent spaceEntityDamageEvent = new SpaceEntityDamageEvent();
+						spaceEntityDamageEvent.setTargetEntity(spaceEntity);
+						spaceEntityDamageEvent.setDamage(damage);
+						NetWorkHeader.sendBroadcast(spaceEntityDamageEvent);
 					}
-
-					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setPosition(tmpUsedForPossition);
-					emitExplosionPacket.setNormal(null);
-					NetWorkHeader.sendBroadcast(emitExplosionPacket);
-
-					projectileVelocity.w = 0.0F;
-					continue projectiles;
-				} // СТОЛКНОВЕНИЕ СНАРЯДА С Кораблями
-			}
-			/* Test against asteroids */
-			for (Asteroid asteroid2 : localAsteroids) {
-				if (asteroid2 == null) {
-					continue;
-				}
-				// СТОЛКНОВЕНИЕ СНАРЯДА С АСТЕРОЙДОМ
-				Vector3d asteroidPos = asteroid2.getPosition();
-				double aPosX = asteroidPos.x;
-				double aPosY = asteroidPos.y;
-				double aPosZ = asteroidPos.z;
-
-				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
-
-				float asteroidScale = asteroid2.scale;
-				float asteroidMeshRadius = asteroidMesh.boundingSphereRadius;
-				FloatBuffer asteroidMeshPositions = asteroidMesh.positions;
-
-				if (broadphase(aPosX, aPosY, aPosZ, asteroidMeshRadius, asteroidScale, projectilePosition, newPosition)
-						&& narrowphase(asteroidMeshPositions, aPosX, aPosY, aPosZ, asteroidScale, projectilePosition,
-								newPosition, tmpUsedForPossition, StaticData.usedForNarmal)) {
-
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
 					emitExplosionPacket.setPosition(tmpUsedForPossition);
 					emitExplosionPacket.setNormal(StaticData.usedForNarmal);// FIXME
 					NetWorkHeader.sendBroadcast(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;
-					continue projectiles;
-				} // СТОЛКНОВЕНИЕ СНАРЯДА С АСТЕРОЙДОМ
-
+				}
 			}
+
 			projectilePosition.set(newPosition);
 		}
-	}
-
-	// updateRockets
-	private void updateRockets(double deltaTime) {
 	}
 	// updateRockets
 
