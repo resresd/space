@@ -1,7 +1,5 @@
 package com.github.resresd.games.resresdspace.client.online.game.engine;
 
-import static com.github.resresd.games.resresdspace.StaticData.broadphase;
-import static com.github.resresd.games.resresdspace.StaticData.narrowphase;
 import static com.github.resresd.games.resresdspace.StaticData.shipNormalVbo;
 import static com.github.resresd.games.resresdspace.StaticData.shipPositionVbo;
 import static com.github.resresd.games.resresdspace.StaticData.sphereMesh;
@@ -153,7 +151,7 @@ import org.slf4j.LoggerFactory;
 import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.client.online.game.engine.input.GameControl;
 import com.github.resresd.games.resresdspace.client.online.game.engine.window.GameShaders;
-import com.github.resresd.games.resresdspace.client.online.game.handlers.network.NetworkHandler;
+import com.github.resresd.games.resresdspace.client.online.game.handlers.network.Network;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
@@ -857,12 +855,6 @@ public class ClientGameEngine {
 		StaticData.init();
 	}
 
-	public void initNetwork() {
-		logger.info("initNetwork-start");
-		NetworkHandler.initNetwork();
-		logger.info("initNetwork-end");
-	}
-
 	private void loop() {
 		logger.info("loop-start");
 		ClientGameEngine.active = true;
@@ -893,8 +885,10 @@ public class ClientGameEngine {
 	private void shoot() {
 		// TODO перенести создание выстрела в сервер
 		try {
-
 			Shot shot = new Shot();
+
+			Vector3f normal = new Vector3f();
+
 			Vector3d shotPosition = shot.getPosition();
 			Vector4f shotVel = shot.getProjectileVelocity();
 
@@ -904,11 +898,12 @@ public class ClientGameEngine {
 			double mouseY = MouseHeader.getMouseY();
 			SpaceCamera camera = GameHeader.camera;
 
-			invViewProjMatrix.transformProject(StaticData.usedForNarmal.set(mouseX, -mouseY, 1.0F)).normalize();
+			invViewProjMatrix.transformProject(normal.set(mouseX, -mouseY, 1.0F)).normalize();
+
 			if (shotVel.w <= 0.0F) {
-				shotVel.x = camera.linearVel.x + StaticData.usedForNarmal.x * shotVelocity;
-				shotVel.y = camera.linearVel.y + StaticData.usedForNarmal.y * shotVelocity;
-				shotVel.z = camera.linearVel.z + StaticData.usedForNarmal.z * shotVelocity;
+				shotVel.x = camera.linearVel.x + normal.x * shotVelocity;
+				shotVel.y = camera.linearVel.y + normal.y * shotVelocity;
+				shotVel.z = camera.linearVel.z + normal.z * shotVelocity;
 				shotVel.w = 0.01f;
 				if (!firstShot) {
 					shotPosition.set(camera.right(tmp3)).mul(shotSeparation).add(camera.position);
@@ -920,7 +915,7 @@ public class ClientGameEngine {
 			}
 			//
 			directShots.add(shot);
-			NetworkHandler.session.write(shot);
+			Network.send(shot);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -948,10 +943,6 @@ public class ClientGameEngine {
 			glfwTerminate();
 		}
 		logger.info("startGame-end");
-	}
-
-	public void startNetwork() throws InterruptedException {
-		NetworkHandler.startNetwork();
 	}
 
 	private void update() {
@@ -1005,9 +996,7 @@ public class ClientGameEngine {
 
 	// ОБНОВЛЕНИЕ ЧАСТИЦ (И УДАЛЕНИЕ ПРИ .w<0 или .w > maxParticleLifetime)
 	private void updateParticles(float deltaTime) {
-
 		for (VectorsDataObjectPairD particle : particles) {
-
 			Vector4d particleVelocity = particle.getParticleVelocity();
 			if (particleVelocity.w <= 0.0F) {
 				continue;
@@ -1027,10 +1016,7 @@ public class ClientGameEngine {
 	}
 
 	private void updateShots(float deltaTime) {
-		projectiles:
-
 		for (Shot shot : directShots) {
-
 			Vector4f projectileVelocity = shot.getProjectileVelocity();
 			if (projectileVelocity.w <= 0.0F) {
 				continue;
@@ -1044,48 +1030,8 @@ public class ClientGameEngine {
 				directShots.remove(shot);
 				continue;
 			}
-			/* Test against ships */
-
-			for (Ship ship : localShips) {
-				if (ship == null) {
-					continue;
-				}
-
-				// getRadius
-				float shipRadius = ship.getScale();
-				Mesh shipMesh = StaticData.getMESHS_MAP().get(Ship.class);
-
-				if (broadphase(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z,
-						shipMesh.boundingSphereRadius, shipRadius, projectilePosition, newPosition)
-						&& narrowphase(shipMesh.positions, ship.getPosition().x, ship.getPosition().y,
-								ship.getPosition().z, shipRadius, projectilePosition, newPosition, tmp,
-								StaticData.usedForNarmal)) {
-					projectileVelocity.w = 0.0F;
-					continue projectiles;
-				}
-
-			}
-			/* Test against asteroids */
-			for (SpaceEntity asteroid2 : SPACE_ENTITIES) {
-				if (asteroid2 == null) {
-					continue;
-				}
-				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
-
-				if (broadphase(asteroid2.getPosition().x, asteroid2.getPosition().y, asteroid2.getPosition().z,
-						asteroidMesh.boundingSphereRadius, asteroid2.scale, projectilePosition, newPosition)
-						&& narrowphase(asteroidMesh.positions, asteroid2.getPosition().x, asteroid2.getPosition().y,
-								asteroid2.getPosition().z, asteroid2.scale, projectilePosition, newPosition, tmp,
-								StaticData.usedForNarmal)) {
-
-					projectileVelocity.w = 0.0F;
-					continue projectiles;
-				}
-
-			}
 			projectilePosition.set(newPosition);
 		}
-
 	}
 
 }

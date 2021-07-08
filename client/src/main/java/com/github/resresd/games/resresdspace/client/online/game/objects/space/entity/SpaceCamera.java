@@ -33,6 +33,10 @@ public class SpaceCamera {
 
 		angularVel.mul(1.0f - angularDamping * deltaTime);
 
+		// TODO если камера привязана к кораблю
+		// TODO получить место корабля, получить позицию в мире, получить углы, (и
+		// проверить на допустимые углы)
+
 		// update position based on linear velocity
 		position.fma(deltaTime, linearVel);
 

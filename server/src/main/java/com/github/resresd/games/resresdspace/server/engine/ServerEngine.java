@@ -118,7 +118,7 @@ public class ServerEngine extends Thread {
 					ship.getPosition().y = y;
 					ship.getPosition().z = z;
 
-					NetWorkHeader.sendBroadcast(ship);
+					NetWorkHeader.sendBroadcastNetty(ship);
 					SPACE_ENTITIES.add(ship);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -178,7 +178,7 @@ public class ServerEngine extends Thread {
 					localShips.add((Ship) object);
 				}
 			}
-			System.err.println(localShips.size());
+
 			if (localShips.size() <= 1) {
 				return;
 			}
@@ -221,7 +221,7 @@ public class ServerEngine extends Thread {
 				projectileVelocity.w = 0.01f;
 			}
 			directShots.add(newShot);
-			NetWorkHeader.sendBroadcast(newShot);
+			NetWorkHeader.sendBroadcastNetty(newShot);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -285,21 +285,21 @@ public class ServerEngine extends Thread {
 					}
 					if (spaceEntity.damage(damage)) {
 						SPACE_ENTITIES.remove(spaceEntity);
-						System.err.println(spaceEntity + " уничтожен");
+
 						SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
 						spaceEntityDestroyEvent.setTargetEntity(spaceEntity);
 
-						NetWorkHeader.sendBroadcast(spaceEntityDestroyEvent);
+						NetWorkHeader.sendBroadcastNetty(spaceEntityDestroyEvent);
 					} else {
 						SpaceEntityDamageEvent spaceEntityDamageEvent = new SpaceEntityDamageEvent();
 						spaceEntityDamageEvent.setTargetEntity(spaceEntity);
 						spaceEntityDamageEvent.setDamage(damage);
-						NetWorkHeader.sendBroadcast(spaceEntityDamageEvent);
+						NetWorkHeader.sendBroadcastNetty(spaceEntityDamageEvent);
 					}
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
 					emitExplosionPacket.setPosition(tmpUsedForPossition);
 					emitExplosionPacket.setNormal(StaticData.usedForNarmal);// FIXME
-					NetWorkHeader.sendBroadcast(emitExplosionPacket);
+					NetWorkHeader.sendBroadcastNetty(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;
 				}

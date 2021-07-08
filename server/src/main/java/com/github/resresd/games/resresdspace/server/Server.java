@@ -5,22 +5,39 @@ import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.util.ServiceConfigurationError;
 
-import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.resresd.games.resresdspace.StaticData;
+import com.github.resresd.games.resresdspace.event.Event;
 import com.github.resresd.games.resresdspace.server.config.ServerConfig;
 import com.github.resresd.games.resresdspace.server.header.ServerHeader;
-import com.github.resresd.games.resresdspace.server.header.network.NetWorkHeader;
+import com.github.resresd.games.resresdspace.server.network.handler.ClientHandlerNetty;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
+import lombok.Getter;
 
 public class Server {
 
 	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+	private @Getter ServerBootstrap serverBootstrap = new ServerBootstrap();
+
+	private @Getter EventLoopGroup serverWorkgroup = new NioEventLoopGroup();
+
+	private @Getter ChannelFuture channelFuture;
 
 	public void initConfig() throws IOException {
 		logger.info("initConfig-start");
@@ -42,24 +59,10 @@ public class Server {
 		logger.info("initConfig-end");
 	}
 
-	public void initNetwork() {
-		logger.info("initNetwork-start");
-
-		ObjectSerializationCodecFactory oscf = new ObjectSerializationCodecFactory();
-		oscf.setDecoderMaxObjectSize(Integer.MAX_VALUE);
-
-		NetWorkHeader.getTcpHandler().getAcceptor().setHandler(NetWorkHeader.getTcpHandler());
-		NetWorkHeader.getTcpHandler().getAcceptor().getFilterChain().addLast("codec", new ProtocolCodecFilter(oscf));
-		NetWorkHeader.getTcpHandler().getAcceptor().getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-
-		logger.info("initNetwork-end");
-	}
-
-	public void startNetwork() throws IOException {
-		logger.info("startNetwork-start");
-		NetWorkHeader.getTcpHandler().getAcceptor()
-				.bind(new InetSocketAddress(ServerHeader.getServerConfig().getNetworkConfig().getServerPort()));
-		logger.info("startNetwork-end");
+	public void initData() throws IOException {
+		logger.info("initData-start");
+		StaticData.init();
+		logger.info("initData-end");
 	}
 
 	public void initGame() {
@@ -68,16 +71,38 @@ public class Server {
 		logger.info("initGame-end");
 	}
 
+	public void initNetwork() {
+		logger.info("initNetwork-start");
+
+		ServerConfig serverConfig = ServerHeader.getServerConfig();
+		int port = serverConfig.getNetworkConfig().getServerPort();
+
+		serverBootstrap.group(serverWorkgroup).channel(NioServerSocketChannel.class)
+				.localAddress(new InetSocketAddress(port));
+		serverBootstrap.option(ChannelOption.SO_REUSEADDR, true);
+		serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
+
+			@Override
+			protected void initChannel(SocketChannel ch) throws Exception {
+				ch.pipeline().addLast(
+						new ObjectDecoder(ClassResolvers.softCachingConcurrentResolver(Event.class.getClassLoader())));
+				ch.pipeline().addLast(new ObjectEncoder());
+				ch.pipeline().addLast(new ClientHandlerNetty());
+			}
+		});
+		logger.info("initNetwork-end");
+	}
+
 	public void startGame() {
 		logger.info("startGame-start");
 		ServerHeader.getServerEngine().start();
 		logger.info("startGame-end");
 	}
 
-	public void initData() throws IOException {
-		logger.info("initData-start");
-		StaticData.init();
-		logger.info("initData-end");
+	public void startNetwork() {
+		logger.info("startNetwork-start");
+		this.channelFuture = serverBootstrap.bind();
+		logger.info("startNetwork-end");
 	}
 
 }

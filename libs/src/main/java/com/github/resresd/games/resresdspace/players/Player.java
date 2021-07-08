@@ -35,4 +35,18 @@ public class Player implements Serializable {
 		setPrivKey(Base64.getEncoder().encodeToString(pub.getEncoded()));
 		setPublicKey(Base64.getEncoder().encodeToString(priv.getEncoded()));
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Player [uuid=");
+		builder.append(uuid);
+		builder.append(", userName=");
+		builder.append(userName);
+		builder.append(", race=");
+		builder.append(race);
+		builder.append("]");
+		return builder.toString();
+	}
+
 }

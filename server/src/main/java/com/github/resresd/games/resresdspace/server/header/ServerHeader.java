@@ -14,11 +14,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 public final class ServerHeader {
-	private ServerHeader() {
-	}
-
 	@Getter
 	private static File rootDir = new File("serverFiles");
+
+	@Getter
+	private static File dataDir = new File(rootDir, "data");
+
+	@Getter
+	private static File worldDir = new File(dataDir, "world");
+	@Getter
+	private static File playersDir = new File(dataDir, "players");
+
 	@Getter
 	private static File configFile = new File(getRootDir(), "ServerConfig.yml");
 
@@ -33,5 +39,9 @@ public final class ServerHeader {
 	private static CopyOnWriteArrayList<Ship> ships = new CopyOnWriteArrayList<>();
 
 	private static final @Getter ConcurrentHashMap<String, Relation> REALTIONS_MAP = new ConcurrentHashMap<>();
+
 	private static final @Getter RelationshipHandler relationHandler = new RelationshipHandler(REALTIONS_MAP);
+
+	private ServerHeader() {
+	}
 }
