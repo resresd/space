@@ -11,14 +11,16 @@ import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.server.Server;
 
 public class Main {
-	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
+		Thread.currentThread().setName("main");
 		Server server = new Server();
 		StaticData.initSecurity();
 		server.initConfig();
 		server.initData();
 		server.initNetwork();
+		server.initApi();
 		// START GAME
 		server.initGame();
 		server.startGame();

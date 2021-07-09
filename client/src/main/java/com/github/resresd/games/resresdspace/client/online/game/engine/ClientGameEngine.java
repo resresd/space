@@ -193,8 +193,8 @@ public class ClientGameEngine {
 
 	public static CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
 
-	public static CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
-	public static CopyOnWriteArrayList<VectorsDataObjectPairD> particles = new CopyOnWriteArrayList<>();
+	public static final @Getter CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
+	public static final CopyOnWriteArrayList<VectorsDataObjectPairD> particles = new CopyOnWriteArrayList<>();
 
 	public static boolean active;
 
@@ -211,7 +211,7 @@ public class ClientGameEngine {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	private int shotProgram;
 	private int shot_projUniform;

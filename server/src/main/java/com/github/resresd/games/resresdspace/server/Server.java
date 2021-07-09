@@ -1,5 +1,6 @@
 package com.github.resresd.games.resresdspace.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
@@ -11,9 +12,13 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.resresd.games.resresdspace.StaticData;
+import com.github.resresd.games.resresdspace.api.server.entities.EntitiesApi;
+import com.github.resresd.games.resresdspace.api.server.network.NetWorkApi;
 import com.github.resresd.games.resresdspace.event.Event;
 import com.github.resresd.games.resresdspace.server.config.ServerConfig;
+import com.github.resresd.games.resresdspace.server.engine.ServerEngine;
 import com.github.resresd.games.resresdspace.server.header.ServerHeader;
+import com.github.resresd.games.resresdspace.server.header.network.NetWorkHeader;
 import com.github.resresd.games.resresdspace.server.network.handler.ClientHandlerNetty;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -31,7 +36,7 @@ import lombok.Getter;
 
 public class Server {
 
-	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	private @Getter ServerBootstrap serverBootstrap = new ServerBootstrap();
 
@@ -39,21 +44,36 @@ public class Server {
 
 	private @Getter ChannelFuture channelFuture;
 
+	public void initApi() {
+		// ENTITIES
+		ServerHeader.getServerEngine();
+		EntitiesApi.entityList = (t) -> {
+			return ServerEngine.getSPACE_ENTITIES();
+		};
+
+		NetWorkApi.broadCastFunction = (t) -> {
+			return NetWorkHeader.sendBroadcastNetty(t);
+		};
+
+	}
+
 	public void initConfig() throws IOException {
 		logger.info("initConfig-start");
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		// CHECK and create
-		if (!ServerHeader.getConfigFile().exists()) {
-			logger.info("root dir is created :{}", ServerHeader.getConfigFile().getParentFile().mkdirs());
-			logger.info("config file is created :{}", ServerHeader.getConfigFile().createNewFile());
 
-			mapper.writeValue(ServerHeader.getConfigFile(), ServerHeader.getServerConfig());
-			throw new ServiceConfigurationError("please edit " + ServerHeader.getConfigFile().getAbsolutePath());
+		File configFile = ServerHeader.getConfigFile();
+		if (!configFile.exists()) {
+			logger.info("root dir is created :{}", configFile.getParentFile().mkdirs());
+			logger.info("config file is created :{}", configFile.createNewFile());
+
+			mapper.writeValue(configFile, ServerHeader.getServerConfig());
+			throw new ServiceConfigurationError("please edit " + configFile.getAbsolutePath());
 		} else {
 			// READ
-			ServerHeader.setServerConfig(mapper.readValue(ServerHeader.getConfigFile(), ServerConfig.class));
+			ServerHeader.setServerConfig(mapper.readValue(configFile, ServerConfig.class));
 			if (!ServerHeader.getServerConfig().isPrepare()) {
-				throw new ServiceConfigurationError("please edit " + ServerHeader.getConfigFile().getAbsolutePath());
+				throw new ServiceConfigurationError("please edit " + configFile.getAbsolutePath());
 			}
 		}
 		logger.info("initConfig-end");

@@ -39,9 +39,9 @@ public class ServerEngine extends Thread {
 	// ########################################################
 	private static final @Getter CopyOnWriteArrayList<SpaceEntity> SPACE_ENTITIES = new CopyOnWriteArrayList<>();
 
-	public static final CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
+	private static final @Getter CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
 	private static float maxShotLifetime = 4.0F;
-	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	@Getter
 	@Setter
 	boolean active = true;
@@ -77,6 +77,8 @@ public class ServerEngine extends Thread {
 
 				Asteroid asteroid = new Asteroid();
 				asteroid.setScale(Asteroid.generateSize(minAsteroidRadius, maxAsteroidRadius));
+
+				asteroid.genHealth();
 
 				asteroid.getPosition().x = NumberUtils.randomDoubleInRange(minX, maxX);
 				asteroid.getPosition().y = NumberUtils.randomDoubleInRange(minY, maxY);
@@ -125,7 +127,7 @@ public class ServerEngine extends Thread {
 				}
 			}
 
-		}), "aaa").start();
+		}), "localShips respawn").start();
 
 		logger.info("init-end");
 	}
@@ -247,6 +249,11 @@ public class ServerEngine extends Thread {
 
 			if (projectileVelocity.w <= 0.0F) {
 				directShots.remove(shot);
+				SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
+				spaceEntityDestroyEvent.setTargetEntity(shot);
+
+				NetWorkHeader.sendBroadcastNetty(spaceEntityDestroyEvent);
+
 				continue;
 			}
 			projectileVelocity.w += deltaTime;
@@ -258,6 +265,10 @@ public class ServerEngine extends Thread {
 			if (projectileVelocity.w > maxShotLifetime) {
 				projectileVelocity.w = 0.0F;
 				directShots.remove(shot);
+				SpaceEntityDestroyEvent spaceEntityDestroyEvent = new SpaceEntityDestroyEvent();
+				spaceEntityDestroyEvent.setTargetEntity(shot);
+
+				NetWorkHeader.sendBroadcastNetty(spaceEntityDestroyEvent);
 				continue;
 			}
 
@@ -275,7 +286,7 @@ public class ServerEngine extends Thread {
 				float boundingSphereRadius = mesh.boundingSphereRadius;
 				FloatBuffer meshPos = mesh.positions;
 
-				float scale = spaceEntity.scale;
+				float scale = spaceEntity.getScale();
 
 				if (broadphase(posX, posY, posZ, boundingSphereRadius, scale, projectilePosition, newPosition)
 						&& narrowphase(meshPos, posX, posY, posZ, scale, projectilePosition, newPosition,
@@ -298,7 +309,7 @@ public class ServerEngine extends Thread {
 					}
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
 					emitExplosionPacket.setPosition(tmpUsedForPossition);
-					emitExplosionPacket.setNormal(StaticData.usedForNarmal);// FIXME
+					emitExplosionPacket.setNormal(StaticData.usedForNarmal);
 					NetWorkHeader.sendBroadcastNetty(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;

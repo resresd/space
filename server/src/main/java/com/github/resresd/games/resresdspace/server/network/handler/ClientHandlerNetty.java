@@ -1,5 +1,7 @@
 package com.github.resresd.games.resresdspace.server.network.handler;
 
+import java.net.SocketAddress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,21 +16,23 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
-
-	Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandlerNetty.class.getSimpleName());
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		NetWorkHeader.getPlayers().putIfAbsent(ctx, new Player());
 		int size = NetWorkHeader.getPlayers().size();
-		logger.info("Session opened  from {}, current:{}", ctx.channel().remoteAddress(), size);
+		SocketAddress addr = ctx.channel().remoteAddress();
+		Thread.currentThread().setName("client: " + addr);
+		LOGGER.info("Session opened. Current:{}", size);
 	}
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		NetWorkHeader.getPlayers().remove(ctx);
 		int size = NetWorkHeader.getPlayers().size();
-		logger.info("Session closed  from {}, current:{}", ctx.channel().remoteAddress(), size);
+
+		LOGGER.info("Session closed. Current:{}", size);
 	}
 
 	@Override
@@ -38,10 +42,9 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 		}
 
 		if (msg instanceof Shot) {
-
 			Shot shot = (Shot) msg;
-			ServerEngine.directShots.add(shot);
 
+			ServerEngine.getDirectShots().add(shot);
 			NetWorkHeader.sendBroadcastExcludeNetty(ctx, msg);
 		} else if (msg instanceof ReadyPacket) {
 
@@ -49,7 +52,8 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 				// send last pos
 				ReadyPacket packet = (ReadyPacket) msg;
 				Player player = packet.getPlayer();
-				System.err.println(player);
+				LOGGER.info("TODO Send last pos for {}", player);
+				LOGGER.info("TODO Send Relation for {}", player);
 
 				ServerEngine.getSPACE_ENTITIES().parallelStream().forEachOrdered(entity -> ctx.writeAndFlush(entity));
 			}).start();
@@ -59,7 +63,7 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		// exception here
+		LOGGER.info("error context:{} error:{}", ctx, cause);
 	}
 
 }

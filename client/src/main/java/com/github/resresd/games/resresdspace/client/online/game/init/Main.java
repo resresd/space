@@ -17,6 +17,7 @@ public class Main {
 
 	public static void main(String[] args) throws NoSuchAlgorithmException, IOException, InterruptedException {
 		try {
+			Thread.currentThread().setName("main");
 			logger.info("main-start");
 			StaticData.initSecurity();
 			GameHeader.onlinegame.initConfig();
@@ -26,8 +27,8 @@ public class Main {
 			Network.startNetwork();
 			GameHeader.onlinegame.startGame();
 
-			Network.exit();
 			ClientGameEngine.rune = true;
+			Network.exit();
 			logger.info("main-end");
 		} catch (NoSuchAlgorithmException e) {
 			printError(e);

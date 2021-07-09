@@ -11,6 +11,6 @@ public interface SpaceEntityInterface {
 
 	public boolean damage(Double dmg);
 
-	public void spawnResource();
+	public void spawnResource(SpaceEntity entity);
 
 }

@@ -26,10 +26,11 @@ public class NetWorkHeader {
 		}
 	}
 
-	public static void sendBroadcastNetty(Object object) {
+	public static boolean sendBroadcastNetty(Object object) {
 		if (!players.isEmpty()) {
 			players.entrySet().parallelStream().forEachOrdered(k -> k.getKey().writeAndFlush(object));
 		}
+		return true;
 	}
 
 	private NetWorkHeader() {

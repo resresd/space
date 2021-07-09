@@ -99,11 +99,11 @@ public class GameShaders {
 			float x = (float) (spaceEntity.getPosition().x - GameHeader.camera.position.x);
 			float y = (float) (spaceEntity.getPosition().y - GameHeader.camera.position.y);
 			float z = (float) (spaceEntity.getPosition().z - GameHeader.camera.position.z);
-			if (frustumIntersection.testSphere(x, y, z, spaceEntity.scale)) {
+			if (frustumIntersection.testSphere(x, y, z, spaceEntity.getScale())) {
 				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(spaceEntity.getClass());
 
 				modelMatrix.translation(x, y, z);
-				modelMatrix.scale(spaceEntity.scale);
+				modelMatrix.scale(spaceEntity.getScale());
 				glUniformMatrix4fv(ship_modelUniform, false, modelMatrix.get(matrixBuffer));
 
 				glDrawArrays(GL_TRIANGLES, 0, asteroidMesh.numVertices);

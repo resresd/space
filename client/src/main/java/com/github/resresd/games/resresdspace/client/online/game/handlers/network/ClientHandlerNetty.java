@@ -65,7 +65,8 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 		if (msg instanceof SpaceEntityDestroyEvent) {
 			SpaceEntityDestroyEvent spaceEntityDestroyEvent = (SpaceEntityDestroyEvent) msg;
 			SpaceEntity entity = spaceEntityDestroyEvent.getTargetEntity();
-
+			if (entity.removeFromList(ClientGameEngine.getDirectShots())) {
+			}
 			if (entity.removeFromList(ClientGameEngine.getSPACE_ENTITIES())) {
 			}
 		}
