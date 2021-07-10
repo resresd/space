@@ -11,7 +11,7 @@ public class Relation implements Serializable {
 
 	private static final long serialVersionUID = -5383678347763771553L;
 
-	public static enum relationType {
+	public enum RelationType {
 		OWN, FRIEND, NEITRAL, ENEMY, NA
 	}
 }

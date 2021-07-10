@@ -9,10 +9,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.Setter;
 
 public class RSAKeyPairGenerator {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RSAKeyPairGenerator.class.getSimpleName());
 	@Getter
 	@Setter
 	private PrivateKey privateKey;
@@ -30,11 +34,11 @@ public class RSAKeyPairGenerator {
 
 	public void writeToFile(String path, byte[] key) throws IOException {
 		File f = new File(path);
-		f.getParentFile().mkdirs();
-		FileOutputStream fos = new FileOutputStream(f);
-		fos.write(key);
-		fos.flush();
-		fos.close();
+		LOGGER.info("Dir for store is created: {}", f.getParentFile().mkdirs());
+		try (FileOutputStream fos = new FileOutputStream(f)) {
+			fos.write(key);
+			fos.flush();
+		}
 	}
 
 	public static void main(String[] args) throws NoSuchAlgorithmException, IOException {

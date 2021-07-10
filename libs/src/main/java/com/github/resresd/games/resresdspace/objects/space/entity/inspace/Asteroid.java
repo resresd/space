@@ -17,12 +17,11 @@ public class Asteroid extends SpaceEntity {
 	}
 
 	public static float generateCoord(float size, float a, float b) {
-		return NumberUtils.randomFloatInRange(0, a / b * size);
+		return NumberUtils.randomFloatInRange(0F, a / b * size);
 	}
 
 	@Override
 	public void spawnResource(SpaceEntity entity) {
-		// размеры
 		float scale = getScale();
 		float scaleCurrent = scale;
 		CopyOnWriteArrayList<Float> scales = new CopyOnWriteArrayList<>();

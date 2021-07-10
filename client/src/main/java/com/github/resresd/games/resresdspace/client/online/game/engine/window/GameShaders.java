@@ -96,9 +96,9 @@ public class GameShaders {
 			if (!(spaceEntity instanceof Asteroid)) {
 				continue;
 			}
-			float x = (float) (spaceEntity.getPosition().x - GameHeader.camera.position.x);
-			float y = (float) (spaceEntity.getPosition().y - GameHeader.camera.position.y);
-			float z = (float) (spaceEntity.getPosition().z - GameHeader.camera.position.z);
+			float x = (float) (spaceEntity.getPosition().x - GameHeader.camera.getPosition().x);
+			float y = (float) (spaceEntity.getPosition().y - GameHeader.camera.getPosition().y);
+			float z = (float) (spaceEntity.getPosition().z - GameHeader.camera.getPosition().z);
 			if (frustumIntersection.testSphere(x, y, z, spaceEntity.getScale())) {
 				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(spaceEntity.getClass());
 

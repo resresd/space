@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.players.Player;
 import com.github.resresd.games.resresdspace.races.Race;
-import com.github.resresd.games.resresdspace.relations.Relation.relationType;
+import com.github.resresd.games.resresdspace.relations.Relation.RelationType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,15 +17,15 @@ public class RelationshipHandler {
 		relData = realtionsMap;
 	}
 
-	public relationType checkRel(Player player, SpaceEntity ship) {
+	public RelationType checkRel(Player player, SpaceEntity ship) {
 		String shipOwner = ship.getOwner();
 		// корабль игрока
 		if (player.getUuid().equals(shipOwner)) {
-			return Relation.relationType.OWN;
+			return Relation.RelationType.OWN;
 		}
 
 		Race playerRase = player.getRace();
 
-		return relationType.NA;
+		return RelationType.NA;
 	}
 }

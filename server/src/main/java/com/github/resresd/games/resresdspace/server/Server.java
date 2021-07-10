@@ -14,6 +14,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.api.server.entities.EntitiesApi;
 import com.github.resresd.games.resresdspace.api.server.network.NetWorkApi;
+import com.github.resresd.games.resresdspace.api.server.player.PlayerApi;
 import com.github.resresd.games.resresdspace.event.Event;
 import com.github.resresd.games.resresdspace.server.config.ServerConfig;
 import com.github.resresd.games.resresdspace.server.engine.ServerEngine;
@@ -46,22 +47,19 @@ public class Server {
 
 	public void initApi() {
 		// ENTITIES
-		ServerHeader.getServerEngine();
-		EntitiesApi.entityList = (t) -> {
-			return ServerEngine.getSPACE_ENTITIES();
-		};
+		EntitiesApi.entityList = t -> ServerEngine.getSPACE_ENTITIES();
 
-		NetWorkApi.broadCastFunction = (t) -> {
-			return NetWorkHeader.sendBroadcastNetty(t);
-		};
+		// players
+		PlayerApi.getPlayerDir = call -> ServerHeader.getPlayersDir();
+
+		// network
+		NetWorkApi.broadCastFunction = NetWorkHeader::sendBroadcastNetty;
 
 	}
 
 	public void initConfig() throws IOException {
 		logger.info("initConfig-start");
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		// CHECK and create
-
 		File configFile = ServerHeader.getConfigFile();
 		if (!configFile.exists()) {
 			logger.info("root dir is created :{}", configFile.getParentFile().mkdirs());
@@ -116,6 +114,7 @@ public class Server {
 	public void startGame() {
 		logger.info("startGame-start");
 		ServerHeader.getServerEngine().start();
+		ServerHeader.getAI_ENGINE().start();
 		logger.info("startGame-end");
 	}
 

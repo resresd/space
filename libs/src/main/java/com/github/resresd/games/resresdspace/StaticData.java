@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
+import com.github.resresd.utils.ExceptionHandler;
 
 import lombok.Getter;
 
@@ -28,6 +29,8 @@ public class StaticData {
 	static Logger logger = LoggerFactory.getLogger(StaticData.class);
 
 	public static SecureRandom secureRandomObj;
+
+	public static final ExceptionHandler EXCEPTION_HANDLER = new ExceptionHandler();
 
 	public static float shotVelocity = 150.0F;
 
@@ -127,7 +130,7 @@ public class StaticData {
 			float v2Z = data.get();
 
 			if (Intersectionf.intersectLineSegmentTriangle(uFnormal.x, uFnormal.y, uFnormal.z, tmp3.x, tmp3.y, tmp3.z,
-					v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z, 1E-6f, uFnormal)) {
+					v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z, 1E-6F, uFnormal)) {
 				intersectionPoint.x = uFnormal.x * scale + x;
 				intersectionPoint.y = uFnormal.y * scale + y;
 				intersectionPoint.z = uFnormal.z * scale + z;

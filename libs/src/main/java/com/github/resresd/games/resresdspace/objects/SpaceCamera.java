@@ -1,16 +1,19 @@
-package com.github.resresd.games.resresdspace.client.online.game.objects.space.entity;
+package com.github.resresd.games.resresdspace.objects;
 
 import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-public class SpaceCamera {
+import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
+
+public class SpaceCamera extends SpaceEntity {
+
+	private static final long serialVersionUID = -6350693892414248146L;
+
 	// линейное ускорение
 	public Vector3f linearAcc = new Vector3f();
-	// линейная скорость
-	public Vector3f linearVel = new Vector3f();
+
 	// линейное торможение
-	public float linearDamping = 0.08f;
+	public float linearDamping = 0.08F;
 
 	/** ALWAYS rotation about the local XYZ axes of the camera! */
 	// угловое ускорение
@@ -18,9 +21,8 @@ public class SpaceCamera {
 	// угловая скорость
 	public Vector3f angularVel = new Vector3f();
 	// угловое торможение
-	public float angularDamping = 0.5f;
+	public float angularDamping = 0.5F;
 
-	public Vector3d position = new Vector3d(0, 0, 10);
 	public Quaternionf rotation = new Quaternionf();
 
 	public SpaceCamera update(float deltaTime) {
@@ -31,16 +33,16 @@ public class SpaceCamera {
 		angularVel.fma(deltaTime, angularAcc);
 		rotation.integrate(deltaTime, angularVel.x, angularVel.y, angularVel.z);
 
-		angularVel.mul(1.0f - angularDamping * deltaTime);
+		angularVel.mul(1.0F - angularDamping * deltaTime);
 
 		// TODO если камера привязана к кораблю
 		// TODO получить место корабля, получить позицию в мире, получить углы, (и
 		// проверить на допустимые углы)
 
 		// update position based on linear velocity
-		position.fma(deltaTime, linearVel);
+		getPosition().fma(deltaTime, linearVel);
 
-		float mul = 1.0f - linearDamping * deltaTime;
+		float mul = 1.0F - linearDamping * deltaTime;
 
 		linearVel.mul(mul);
 		return this;
@@ -74,7 +76,7 @@ public class SpaceCamera {
 		builder.append(", angularDamping=");
 		builder.append(angularDamping);
 		builder.append(", position=");
-		builder.append(position);
+		builder.append(getPosition());
 		builder.append(", rotation=");
 		builder.append(rotation);
 		builder.append("]");

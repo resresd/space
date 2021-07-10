@@ -2,6 +2,7 @@ package com.github.resresd.games.resresdspace.objects.space.entity.inspace;
 
 import org.joml.Vector3d;
 
+import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.api.server.entities.EntitiesApi;
 import com.github.resresd.games.resresdspace.objects.inship.Item;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
@@ -13,10 +14,6 @@ import lombok.Setter;
 public class Ship extends SpaceEntity {
 
 	private static final long serialVersionUID = 8106186193197505136L;
-
-	public Ship() {
-		super();
-	}
 
 	@Getter
 	@Setter
@@ -42,7 +39,7 @@ public class Ship extends SpaceEntity {
 				// TODO create data for Box (mesh , etc)
 				EntitiesApi.spawnEntity(box);
 			} catch (Exception e) {
-				e.printStackTrace();
+				StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 			}
 		}
 	}

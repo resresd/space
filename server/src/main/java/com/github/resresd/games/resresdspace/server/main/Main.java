@@ -14,7 +14,7 @@ public class Main {
 	static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		Thread.currentThread().setName("main");
+		Thread.currentThread().setName("Game:main");
 		Server server = new Server();
 		StaticData.initSecurity();
 		server.initConfig();

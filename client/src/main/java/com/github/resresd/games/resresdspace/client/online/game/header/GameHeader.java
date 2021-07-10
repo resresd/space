@@ -9,7 +9,7 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 
 import com.github.resresd.games.resresdspace.client.online.game.configs.ClientConfig;
 import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
-import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
+import com.github.resresd.games.resresdspace.objects.SpaceCamera;
 import com.github.resresd.games.resresdspace.relations.Relation;
 import com.github.resresd.games.resresdspace.relations.RelationshipHandler;
 

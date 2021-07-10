@@ -155,20 +155,20 @@ import com.github.resresd.games.resresdspace.client.online.game.handlers.network
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.control.MouseHeader;
 import com.github.resresd.games.resresdspace.client.online.game.header.window.WindowHeader;
-import com.github.resresd.games.resresdspace.client.online.game.objects.space.entity.SpaceCamera;
 import com.github.resresd.games.resresdspace.client.online.game.utils.ConfigUtils;
 import com.github.resresd.games.resresdspace.client.online.game.utils.MouseUtils;
 import com.github.resresd.games.resresdspace.gui.menu.CoordUtils;
 import com.github.resresd.games.resresdspace.gui.menu.Element;
 import com.github.resresd.games.resresdspace.gui.menu.Layout;
 import com.github.resresd.games.resresdspace.gui.menu.Menu;
+import com.github.resresd.games.resresdspace.objects.SpaceCamera;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.VectorsDataObjectPairD;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Shot;
 import com.github.resresd.games.resresdspace.players.Player;
-import com.github.resresd.games.resresdspace.relations.Relation.relationType;
+import com.github.resresd.games.resresdspace.relations.Relation.RelationType;
 
 import lombok.Getter;
 
@@ -177,13 +177,13 @@ public class ClientGameEngine {
 
 	private static float shotVelocity = 900.0F;
 
-	private static float shotSeparation = 0.8f;
+	private static float shotSeparation = 0.8F;
 	private static int shotMilliseconds = 20;// ПЕРЕЗАРЯДКА своя
 
 	private static float maxShotLifetime = 4.0F;
 
 	private static float maxParticleLifetime = 1.0F;
-	private static float shotSize = 0.5f;
+	private static float shotSize = 0.5F;
 	private static float particleSize = 1.0F;
 	private static final int explosionParticles = 40;
 	private static final int maxShots = 102400;
@@ -332,7 +332,7 @@ public class ClientGameEngine {
 		Double currentHealth = enemyShip.getHealth();
 		Double currentMax = enemyShip.getHealthMax();
 
-		float crosshairSize2 = 0.04f;
+		float crosshairSize2 = 0.04F;
 		float xs2 = crosshairSize2 * realWindowHeight / realWindowWidth;
 		float ys2 = crosshairSize2;
 
@@ -356,10 +356,10 @@ public class ClientGameEngine {
 		float x2N = CoordUtils.forGlCoordByReal(healLen, realWindowWidth);
 
 		glBegin(GL_LINES);
-		glColor4f(1.0f, 0.0f, 0.0f, 0.0f);// red
+		glColor4f(1.0F, 0.0F, 0.0F, 0.0F);// red
 		glVertex2f(x1, y1);
 		glVertex2f(x2N, y2);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.0f);// white
+		glColor4f(1.0F, 1.0F, 1.0F, 0.0F);// white
 		glEnd();
 	}
 
@@ -378,9 +378,9 @@ public class ClientGameEngine {
 				double enemyShipPosY = enemyShip.getPosition().y;
 				double enemyShipPosZ = enemyShip.getPosition().z;
 
-				double cameraPositionX = camera.position.x;
-				double cameraPositionY = camera.position.y;
-				double cameraPositionZ = camera.position.z;
+				double cameraPositionX = camera.getPosition().x;
+				double cameraPositionY = camera.getPosition().y;
+				double cameraPositionZ = camera.getPosition().z;
 
 				float posX = (float) (enemyShipPosX - cameraPositionX);
 				float posY = (float) (enemyShipPosY - cameraPositionY);
@@ -410,7 +410,7 @@ public class ClientGameEngine {
 				int realWindowHeight = WindowHeader.getHeight();
 				int realWindowWidth = WindowHeader.getWidth();
 
-				float crosshairSize = 0.03f;
+				float crosshairSize = 0.03F;
 				float xs = crosshairSize * realWindowHeight / realWindowWidth;
 				float ys = crosshairSize;
 				crosshairVerticesFloatBuffer.clear();
@@ -421,26 +421,26 @@ public class ClientGameEngine {
 				crosshairVerticesFloatBuffer.flip();
 
 				Player player = GameHeader.getClientConfig().getPlayer();
-				relationType relation = GameHeader.getRelationHandler().checkRel(player, enemyShip);
+				RelationType relation = GameHeader.getRelationHandler().checkRel(player, enemyShip);
 
 				boolean own = false;
 				boolean friend = false;
 				boolean enemy = false;
 
-				if (relation == relationType.OWN) {
+				if (relation == RelationType.OWN) {
 					own = true;
-				} else if (relation == relationType.FRIEND) {
+				} else if (relation == RelationType.FRIEND) {
 					friend = true;
-				} else if (relation == relationType.ENEMY) {
+				} else if (relation == RelationType.ENEMY) {
 					enemy = true;
 				}
 
 				if (own) {
-					glColor4f(0.0f, 1.0f, 1.0f, 0.0f);// r.Green.blue.a
+					glColor4f(0.0F, 1.0F, 1.0F, 0.0F);// r.Green.blue.a
 				} else if (friend) {
-					glColor4f(0.0f, 1.0f, 0.0f, 0.0f);// r.Green.b.a
+					glColor4f(0.0F, 1.0F, 0.0F, 0.0F);// r.Green.b.a
 				} else if (enemy) {
-					glColor4f(1.0f, 0.0f, 0.0f, 0.0f);// Red.g.b.a
+					glColor4f(1.0F, 0.0F, 0.0F, 0.0F);// Red.g.b.a
 				}
 
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -449,7 +449,7 @@ public class ClientGameEngine {
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 				// clear collor
-				glColor4f(1.0f, 1.0f, 1.0f, 0.0f);// white
+				glColor4f(1.0F, 1.0F, 1.0F, 0.0F);// white
 
 				drawHeal(enemyShip, targetOrigin, realWindowHeight, realWindowWidth);
 
@@ -458,7 +458,7 @@ public class ClientGameEngine {
 				glVertexPointer(2, GL_FLOAT, 16, charBuffer);
 				glPushMatrix();
 				// Scroll
-				glTranslatef(targetOrigin.x, targetOrigin.y - crosshairSize * 1.1f, 0F);
+				glTranslatef(targetOrigin.x, targetOrigin.y - crosshairSize * 1.1F, 0F);
 				float aspect = (float) WindowHeader.getWidth() / WindowHeader.getHeight();
 				glScalef(1.0F / 500.0F, -1.0F / 500.0F * aspect, 0.0F);
 				glDrawArrays(GL_QUADS, 0, quads * 4);
@@ -485,7 +485,7 @@ public class ClientGameEngine {
 					Vector3d targetOrigin = tmp;
 					targetOrigin.set(shipPosX, shipPosY, shipPosZ);
 
-					Vector3f interceptorDir = StaticData.intercept(camera.position, shotVelocity, targetOrigin,
+					Vector3f interceptorDir = StaticData.intercept(camera.getPosition(), shotVelocity, targetOrigin,
 							tmp3.set(camera.linearVel).negate(), StaticData.usedForNarmal);
 
 					if (interceptorDir == null) {
@@ -519,7 +519,7 @@ public class ClientGameEngine {
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 			}
 		}
 	}
@@ -539,9 +539,9 @@ public class ClientGameEngine {
 			if (particleVelocity.w > 0.0F) {
 				SpaceCamera camera = GameHeader.camera;
 
-				float x = (float) (particlePosition.x - camera.position.x);
-				float y = (float) (particlePosition.y - camera.position.y);
-				float z = (float) (particlePosition.z - camera.position.z);
+				float x = (float) (particlePosition.x - camera.getPosition().x);
+				float y = (float) (particlePosition.y - camera.getPosition().y);
+				float z = (float) (particlePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = (float) particleVelocity.w;
 					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
@@ -599,9 +599,9 @@ public class ClientGameEngine {
 
 			SpaceCamera camera = GameHeader.camera;
 
-			float x = (float) (ship.getPosition().x - camera.position.x);
-			float y = (float) (ship.getPosition().y - camera.position.y);
-			float z = (float) (ship.getPosition().z - camera.position.z);
+			float x = (float) (ship.getPosition().x - camera.getPosition().x);
+			float y = (float) (ship.getPosition().y - camera.getPosition().y);
+			float z = (float) (ship.getPosition().z - camera.getPosition().z);
 
 			float radius = ship.getScale();
 			if (frustumIntersection.testSphere(x, y, z, radius)) {
@@ -625,9 +625,9 @@ public class ClientGameEngine {
 			Vector4f projectileVelocity = shot.getProjectileVelocity();
 			if (projectileVelocity.w > 0.0F) {
 				SpaceCamera camera = GameHeader.camera;
-				float x = (float) (projectilePosition.x - camera.position.x);
-				float y = (float) (projectilePosition.y - camera.position.y);
-				float z = (float) (projectilePosition.z - camera.position.z);
+				float x = (float) (projectilePosition.x - camera.getPosition().x);
+				float y = (float) (projectilePosition.y - camera.getPosition().y);
+				float z = (float) (projectilePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = projectileVelocity.w;
 					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
@@ -735,7 +735,7 @@ public class ClientGameEngine {
 				}
 				particleVelocity.normalize3();
 				particleVelocity.mul(140);
-				particleVelocity.w = 0.01f;
+				particleVelocity.w = 0.01F;
 				particlePosition.set(p);
 				if (c-- == 0) {
 					break;
@@ -904,12 +904,12 @@ public class ClientGameEngine {
 				shotVel.x = camera.linearVel.x + normal.x * shotVelocity;
 				shotVel.y = camera.linearVel.y + normal.y * shotVelocity;
 				shotVel.z = camera.linearVel.z + normal.z * shotVelocity;
-				shotVel.w = 0.01f;
+				shotVel.w = 0.01F;
 				if (!firstShot) {
-					shotPosition.set(camera.right(tmp3)).mul(shotSeparation).add(camera.position);
+					shotPosition.set(camera.right(tmp3)).mul(shotSeparation).add(camera.getPosition());
 					firstShot = true;
 				} else {
-					shotPosition.set(camera.right(tmp3)).mul(-shotSeparation).add(camera.position);
+					shotPosition.set(camera.right(tmp3)).mul(-shotSeparation).add(camera.getPosition());
 					firstShot = false;
 				}
 			}
@@ -917,7 +917,7 @@ public class ClientGameEngine {
 			directShots.add(shot);
 			Network.send(shot);
 		} catch (Exception e) {
-			e.printStackTrace();
+			StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 		}
 	}
 
@@ -938,7 +938,7 @@ public class ClientGameEngine {
 			wsCallback.free();
 			glfwDestroyWindow(WindowHeader.getWindow());
 		} catch (Throwable t) {
-			t.printStackTrace();
+			StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), t);
 		} finally {
 			glfwTerminate();
 		}
@@ -960,7 +960,7 @@ public class ClientGameEngine {
 
 		// УСТАНОВКА ПЕРСПЕКТИВЫ
 		projMatrix.setPerspective((float) Math.toRadians(40.0F),
-				(float) WindowHeader.getWidth() / WindowHeader.getHeight(), 0.1f,
+				(float) WindowHeader.getWidth() / WindowHeader.getHeight(), 0.1F,
 				GameHeader.getClientConfig().getWindowConfig().getDistanceDraw());
 
 		viewMatrix.set(camera.rotation).invert(invViewMatrix);

@@ -20,6 +20,7 @@ import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDamageEvent;
 import com.github.resresd.games.resresdspace.event.space.SpaceEntityDestroyEvent;
+import com.github.resresd.games.resresdspace.objects.SpaceCamera;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Asteroid;
 import com.github.resresd.games.resresdspace.objects.space.entity.inspace.Ship;
@@ -41,7 +42,7 @@ public class ServerEngine extends Thread {
 
 	private static final @Getter CopyOnWriteArrayList<Shot> directShots = new CopyOnWriteArrayList<>();
 	private static float maxShotLifetime = 4.0F;
-	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	@Getter
 	@Setter
 	boolean active = true;
@@ -54,13 +55,13 @@ public class ServerEngine extends Thread {
 	// ########################################################ПОДГОТОВКА
 
 	public void init() {
-		logger.info("init-start");
+		LOGGER.info("init-start");
 
 		ServerConfig serverConfig = ServerHeader.getServerConfig();
 		AsteroidsConfig asteroidsConfig = serverConfig.getAsteroidsConfig();
 
 		for (int i = 0; i < asteroidsConfig.getCount(); i++) {
-			logger.info("Ast:{}", i);
+			LOGGER.info("Ast:{}", i);
 			try {
 
 				float minAsteroidRadius = asteroidsConfig.getMinAsteroidRadius();
@@ -86,20 +87,23 @@ public class ServerEngine extends Thread {
 
 				SPACE_ENTITIES.add(asteroid);
 			} catch (Exception e) {
-				e.printStackTrace();
+				StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 			}
 		}
 		new Thread(((Runnable) () -> {
-			logger.info("localShips started");
+			Thread currentThread = Thread.currentThread();
+			currentThread.setName("Game:Ship respawner");
+			LOGGER.info("{} started", currentThread.getName());
 			while (active) {
 				try {
 					ShipsConfig shipConfig = ServerHeader.getServerConfig().getShipsConfig();
-					CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+					CopyOnWriteArrayList<SpaceEntity> localShips = new CopyOnWriteArrayList<>();
 
 					for (Object object : SPACE_ENTITIES) {
 						if (object instanceof Ship) {
 							localShips.add((Ship) object);
 						}
+
 					}
 
 					if (localShips.size() > shipConfig.getMaxCount()) {
@@ -123,17 +127,17 @@ public class ServerEngine extends Thread {
 					NetWorkHeader.sendBroadcastNetty(ship);
 					SPACE_ENTITIES.add(ship);
 				} catch (Exception e) {
-					e.printStackTrace();
+					StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 				}
 			}
 
-		}), "localShips respawn").start();
+		})).start();
 
-		logger.info("init-end");
+		LOGGER.info("init-end");
 	}
 
 	private void loop() {
-		logger.info("loop-start");
+		LOGGER.info("loop-start");
 		while (active) {
 			long thisTime = System.nanoTime();
 			double deltaTime = (thisTime - lastTime) / 1E9D;
@@ -142,7 +146,7 @@ public class ServerEngine extends Thread {
 			update(deltaTime);
 
 			CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
-			for (Object object : SPACE_ENTITIES) {
+			for (SpaceEntity object : SPACE_ENTITIES) {
 				if (object instanceof Ship) {
 					localShips.add((Ship) object);
 				}
@@ -152,15 +156,16 @@ public class ServerEngine extends Thread {
 			}
 
 		}
-		logger.info("loop-end");
+		LOGGER.info("loop-end");
 	}
 
 	// ########################################################
 	@Override
 	public void run() {
-		logger.info("run-start");
+		Thread.currentThread().setName("Game:ServerEngine");
+		LOGGER.info("run-start");
 		loop();
-		logger.info("run-end");
+		LOGGER.info("run-end");
 	}
 
 	// SHOOT
@@ -173,11 +178,14 @@ public class ServerEngine extends Thread {
 
 			ship.lastShotTime = thisTime;
 
-			CopyOnWriteArrayList<Ship> localShips = new CopyOnWriteArrayList<>();
+			CopyOnWriteArrayList<SpaceEntity> localShips = new CopyOnWriteArrayList<>();
 
-			for (Object object : SPACE_ENTITIES) {
-				if (object instanceof Ship) {
-					localShips.add((Ship) object);
+			for (SpaceEntity spaceEntity : SPACE_ENTITIES) {
+				if (spaceEntity instanceof Ship) {
+					localShips.add(spaceEntity);
+				}
+				if (spaceEntity instanceof SpaceCamera) {
+					localShips.add(spaceEntity);
 				}
 			}
 
@@ -189,7 +197,7 @@ public class ServerEngine extends Thread {
 			Vector3f tmp4 = new Vector3f();
 
 			// TARGET
-			Ship targetShip = localShips.get(NumberUtils.randomIntInRange(0, localShips.size() - 1));
+			SpaceEntity targetShip = localShips.get(NumberUtils.randomIntInRange(0, localShips.size() - 1));
 
 			Vector3d position = targetShip.getPosition();
 			Vector3f linearVel = targetShip.getLinearVel();
@@ -198,7 +206,7 @@ public class ServerEngine extends Thread {
 			float shipRadius = targetShip.getScale();
 
 			Vector3d shotPos = tmpUsedForPossition.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z)
-					.sub(position).negate().normalize().mul(1.01f * shipRadius)
+					.sub(position).negate().normalize().mul(1.01F * shipRadius)
 					.add(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z);
 			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel,
 					StaticData.usedForNarmal);
@@ -208,8 +216,8 @@ public class ServerEngine extends Thread {
 			} // jitter the direction a bit
 
 			GeometryUtils.perpendicular(icept, tmp3, tmp4);
-			icept.fma(((float) Math.random() * 2.0F - 1.0F) * 0.01f, tmp3);
-			icept.fma(((float) Math.random() * 2.0F - 1.0F) * 0.01f, tmp4);
+			icept.fma(((float) Math.random() * 2.0F - 1.0F) * 0.01F, tmp3);
+			icept.fma(((float) Math.random() * 2.0F - 1.0F) * 0.01F, tmp4);
 			icept.normalize();
 
 			Shot newShot = new Shot();
@@ -220,12 +228,12 @@ public class ServerEngine extends Thread {
 				projectileVelocity.x = StaticData.usedForNarmal.x * StaticData.shotVelocity;
 				projectileVelocity.y = StaticData.usedForNarmal.y * StaticData.shotVelocity;
 				projectileVelocity.z = StaticData.usedForNarmal.z * StaticData.shotVelocity;
-				projectileVelocity.w = 0.01f;
+				projectileVelocity.w = 0.01F;
 			}
-			directShots.add(newShot);
 			NetWorkHeader.sendBroadcastNetty(newShot);
+			directShots.add(newShot);
 		} catch (Exception e) {
-			e.printStackTrace();
+			StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), e);
 		}
 	}
 	// SHOOT
@@ -241,7 +249,6 @@ public class ServerEngine extends Thread {
 	}
 
 	private void updateShots(double deltaTime) {
-		projectiles:
 
 		for (Shot shot : directShots) {
 			Vector4f projectileVelocity = shot.getProjectileVelocity();
@@ -256,6 +263,7 @@ public class ServerEngine extends Thread {
 
 				continue;
 			}
+
 			projectileVelocity.w += deltaTime;
 			Vector3d projectilePosition = shot.getPosition();
 			Vector3d newPosition = new Vector3d();
@@ -274,7 +282,7 @@ public class ServerEngine extends Thread {
 
 			for (SpaceEntity spaceEntity : SPACE_ENTITIES) {
 				if (spaceEntity == null) {
-					logger.warn("For:spaceEntity is null");
+					LOGGER.warn("For:spaceEntity is null");
 					continue;
 				}
 				Vector3d spaceEntityPosition = spaceEntity.getPosition();
@@ -291,9 +299,7 @@ public class ServerEngine extends Thread {
 				if (broadphase(posX, posY, posZ, boundingSphereRadius, scale, projectilePosition, newPosition)
 						&& narrowphase(meshPos, posX, posY, posZ, scale, projectilePosition, newPosition,
 								tmpUsedForPossition, StaticData.usedForNarmal)) {
-					if (false) {
-						System.err.println("for SPACE_ENTITIES broadphase&&narrowphase: " + spaceEntity);
-					}
+
 					if (spaceEntity.damage(damage)) {
 						SPACE_ENTITIES.remove(spaceEntity);
 

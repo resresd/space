@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -44,7 +45,7 @@ public class WavefrontMeshLoader {
 		int numberOfNormals;
 	}
 
-	public class MeshObject {
+	public static class MeshObject {
 		public String name;
 		public int first;
 		public int count;
@@ -99,7 +100,10 @@ public class WavefrontMeshLoader {
 
 	public Mesh loadMesh(String resource) throws IOException {
 		byte[] arr = readSingleFileZip(resource);
-		WavefrontInfo info = getInfo(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(arr))));
+		ByteArrayInputStream a1 = new ByteArrayInputStream(arr);
+		InputStreamReader a2 = new InputStreamReader(a1, StandardCharsets.UTF_8);
+		BufferedReader a3 = new BufferedReader(a2);
+		WavefrontInfo info = getInfo(a3);
 
 		// Allocate buffers for all vertices/normal
 		ByteBuffer positionByteBuffer = BufferUtils.createByteBuffer(3 * info.numberOfVertices * 4);
@@ -117,10 +121,11 @@ public class WavefrontMeshLoader {
 		Mesh mesh = new Mesh();
 		MeshObject object = null;
 
-		float minX = 1E38f, minY = 1E38f, minZ = 1E38f;
-		float maxX = -1E38f, maxY = -1E38f, maxZ = -1E38f;
+		float minX = 1E38F, minY = 1E38F, minZ = 1E38F;
+		float maxX = -1E38F, maxY = -1E38F, maxZ = -1E38F;
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(arr)));
+		BufferedReader reader = new BufferedReader(
+				new InputStreamReader(new ByteArrayInputStream(arr), StandardCharsets.UTF_8));
 		String line;
 		int faceIndex = 0;
 		Vector3f tmp = new Vector3f();
@@ -198,15 +203,15 @@ public class WavefrontMeshLoader {
 				}
 				positionData.put(ver1X).put(ver1Y).put(ver1Z);
 				if (fourComponentPosition) {
-					positionData.put(1.0f);
+					positionData.put(1.0F);
 				}
 				positionData.put(ver2X).put(ver2Y).put(ver2Z);
 				if (fourComponentPosition) {
-					positionData.put(1.0f);
+					positionData.put(1.0F);
 				}
 				positionData.put(ver3X).put(ver3Y).put(ver3Z);
 				if (fourComponentPosition) {
-					positionData.put(1.0f);
+					positionData.put(1.0F);
 				}
 				float norm1X = normals.get(3 * (n1 - 1) + 0);
 				float norm1Y = normals.get(3 * (n1 - 1) + 1);
@@ -233,7 +238,7 @@ public class WavefrontMeshLoader {
 		}
 		positionData.flip();
 		normalData.flip();
-		mesh.boundingSphereRadius = Math.max(maxX - minX, Math.max(maxY - minY, maxZ - minZ)) * 0.5f;
+		mesh.boundingSphereRadius = Math.max(maxX - minX, Math.max(maxY - minY, maxZ - minZ)) * 0.5F;
 		mesh.positions = positionData;
 		mesh.normals = normalData;
 		mesh.numVertices = positionData.limit() / (fourComponentPosition ? 4 : 3);

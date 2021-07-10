@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class EmitExplosionPacket extends Packet {
+	private static final long serialVersionUID = 2391827501487854889L;
 	@Getter
 	@Setter
 	Vector3d position;

@@ -5,6 +5,7 @@ import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.client.online.game.engine.ClientGameEngine;
 import com.github.resresd.games.resresdspace.client.online.game.header.GameHeader;
 import com.github.resresd.games.resresdspace.event.space.EmitExplosionPacket;
@@ -18,8 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
-
-	Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandlerNetty.class);
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -52,13 +52,15 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 		}
 		if (msg instanceof SpaceEntityDamageEvent) {
 			SpaceEntityDamageEvent spaceEntityDamageEvent = (SpaceEntityDamageEvent) msg;
-			SpaceEntity entityInEngine = SpaceEntity.getFromEngine(ClientGameEngine.getSPACE_ENTITIES(),
-					spaceEntityDamageEvent.getTargetEntity());
+			SpaceEntity eventEntity = spaceEntityDamageEvent.getTargetEntity();
+			Double damage = spaceEntityDamageEvent.getDamage();
+
+			SpaceEntity entityInEngine = SpaceEntity.getFromEngine(ClientGameEngine.getSPACE_ENTITIES(), eventEntity);
 
 			if (entityInEngine != null) {
-				entityInEngine.damage(spaceEntityDamageEvent.getDamage());
+				entityInEngine.damage(damage);
 			} else {
-				System.err.println("OnlineHandler:msgReceived:SpaceEntityDamageEvent:null");
+				LOGGER.warn("msgReceived:SpaceEntityDamageEvent:null");
 			}
 
 		}
@@ -74,6 +76,7 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		logger.error("network context:{} exception:{}", ctx, cause);
+		LOGGER.error("network context:{} exception:{}", ctx, cause);
+		StaticData.EXCEPTION_HANDLER.uncaughtException(Thread.currentThread(), cause);
 	}
 }
