@@ -17,12 +17,8 @@ import lombok.Setter;
 
 public class RSAKeyPairGenerator {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RSAKeyPairGenerator.class.getSimpleName());
-	@Getter
-	@Setter
-	private PrivateKey privateKey;
-	@Getter
-	@Setter
-	private PublicKey publicKey;
+	private @Getter @Setter PrivateKey privateKey;
+	private @Getter @Setter PublicKey publicKey;
 
 	public RSAKeyPairGenerator() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -37,10 +33,6 @@ public class RSAKeyPairGenerator {
 		LOGGER.info("Dir for store is created: {}", f.getParentFile().mkdirs());
 		try (FileOutputStream fos = new FileOutputStream(f)) {
 			fos.write(key);
-			fos.flush();
 		}
-	}
-
-	public static void main(String[] args) throws NoSuchAlgorithmException, IOException {
 	}
 }

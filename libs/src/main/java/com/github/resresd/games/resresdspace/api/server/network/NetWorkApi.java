@@ -4,9 +4,12 @@ import java.util.function.UnaryOperator;
 
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class NetWorkApi {
 
-	public static UnaryOperator<Object> broadCastFunction;
+	private static @Getter @Setter UnaryOperator<Object> broadCastFunction;
 
 	public static void sendBroadCast(SpaceEntity entity) {
 		broadCastFunction.apply(entity);

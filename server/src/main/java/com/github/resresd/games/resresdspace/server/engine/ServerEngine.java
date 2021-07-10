@@ -2,7 +2,6 @@ package com.github.resresd.games.resresdspace.server.engine;
 
 import static com.github.resresd.games.resresdspace.StaticData.broadphase;
 import static com.github.resresd.games.resresdspace.StaticData.narrowphase;
-import static com.github.resresd.games.resresdspace.StaticData.tmpUsedForPossition;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.FloatBuffer;
@@ -205,11 +204,12 @@ public class ServerEngine extends Thread {
 			// getRadius
 			float shipRadius = targetShip.getScale();
 
-			Vector3d shotPos = tmpUsedForPossition.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z)
-					.sub(position).negate().normalize().mul(1.01F * shipRadius)
+			Vector3d shotPos = StaticData.getTmpUsedForPossition()
+					.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z).sub(position).negate()
+					.normalize().mul(1.01F * shipRadius)
 					.add(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z);
 			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel,
-					StaticData.usedForNarmal);
+					StaticData.getUsedForNarmal());
 
 			if (icept == null) {
 				return;
@@ -225,9 +225,9 @@ public class ServerEngine extends Thread {
 			Vector4f projectileVelocity = newShot.getProjectileVelocity();
 			if (projectileVelocity.w <= 0.0F) {
 				projectilePosition.set(shotPos);
-				projectileVelocity.x = StaticData.usedForNarmal.x * StaticData.shotVelocity;
-				projectileVelocity.y = StaticData.usedForNarmal.y * StaticData.shotVelocity;
-				projectileVelocity.z = StaticData.usedForNarmal.z * StaticData.shotVelocity;
+				projectileVelocity.x = StaticData.getUsedForNarmal().x * StaticData.shotVelocity;
+				projectileVelocity.y = StaticData.getUsedForNarmal().y * StaticData.shotVelocity;
+				projectileVelocity.z = StaticData.getUsedForNarmal().z * StaticData.shotVelocity;
 				projectileVelocity.w = 0.01F;
 			}
 			NetWorkHeader.sendBroadcastNetty(newShot);
@@ -298,7 +298,7 @@ public class ServerEngine extends Thread {
 
 				if (broadphase(posX, posY, posZ, boundingSphereRadius, scale, projectilePosition, newPosition)
 						&& narrowphase(meshPos, posX, posY, posZ, scale, projectilePosition, newPosition,
-								tmpUsedForPossition, StaticData.usedForNarmal)) {
+								StaticData.getTmpUsedForPossition(), StaticData.getUsedForNarmal())) {
 
 					if (spaceEntity.damage(damage)) {
 						SPACE_ENTITIES.remove(spaceEntity);
@@ -314,8 +314,8 @@ public class ServerEngine extends Thread {
 						NetWorkHeader.sendBroadcastNetty(spaceEntityDamageEvent);
 					}
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
-					emitExplosionPacket.setPosition(tmpUsedForPossition);
-					emitExplosionPacket.setNormal(StaticData.usedForNarmal);
+					emitExplosionPacket.setPosition(StaticData.getTmpUsedForPossition());
+					emitExplosionPacket.setNormal(StaticData.getUsedForNarmal());
 					NetWorkHeader.sendBroadcastNetty(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;

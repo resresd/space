@@ -47,13 +47,13 @@ public class Server {
 
 	public void initApi() {
 		// ENTITIES
-		EntitiesApi.entityList = t -> ServerEngine.getSPACE_ENTITIES();
+		EntitiesApi.setEntityList(t -> ServerEngine.getSPACE_ENTITIES());
 
 		// players
 		PlayerApi.getPlayerDir = call -> ServerHeader.getPlayersDir();
 
 		// network
-		NetWorkApi.broadCastFunction = NetWorkHeader::sendBroadcastNetty;
+		NetWorkApi.setBroadCastFunction(NetWorkHeader::sendBroadcastNetty);
 
 	}
 

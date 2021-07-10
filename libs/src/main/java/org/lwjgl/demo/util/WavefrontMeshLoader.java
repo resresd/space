@@ -32,10 +32,10 @@ import lombok.Setter;
 public class WavefrontMeshLoader {
 
 	public static class Mesh {
-		public FloatBuffer positions;
-		public FloatBuffer normals;
-		public int numVertices;
-		public float boundingSphereRadius;
+		public @Getter FloatBuffer positions;
+		public @Getter FloatBuffer normals;
+		public @Getter int numVertices;
+		public @Getter float boundingSphereRadius;
 		public List<MeshObject> objects = new ArrayList<MeshObject>();
 	}
 
@@ -47,7 +47,7 @@ public class WavefrontMeshLoader {
 
 	public static class MeshObject {
 		public String name;
-		public int first;
+		public @Getter int first;
 		public int count;
 		public Vector3f min = new Vector3f(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
 		public Vector3f max = new Vector3f(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);

@@ -26,7 +26,7 @@ import lombok.Getter;
 
 public class StaticData {
 
-	static Logger logger = LoggerFactory.getLogger(StaticData.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(StaticData.class);
 
 	private @Getter static SecureRandom secureRandomObj;
 
@@ -43,13 +43,12 @@ public class StaticData {
 	/**
 	 * ИСПОЛЬЗУЕТСЯ В УПРАВЛЕНИИ ДЛЯ ПОВОРОТОВ
 	 */
-	@Getter
-	public static Vector3f usedForNarmal = new Vector3f();
+	private static final @Getter Vector3f usedForNarmal = new Vector3f();
 
-	public static Vector3d tmpUsedForPossition = new Vector3d();
+	private static final @Getter Vector3d tmpUsedForPossition = new Vector3d();
 
 	// WTF
-	public static Vector3f tmp3 = new Vector3f();
+	private static final @Getter Vector3f tmp3 = new Vector3f();
 
 	private static final @Getter ConcurrentHashMap<Class<?>, Mesh> MESHS_MAP = new ConcurrentHashMap<>();
 
@@ -69,11 +68,11 @@ public class StaticData {
 	}
 
 	public static void initSecurity() throws NoSuchAlgorithmException {
-		logger.info("initSecurity");
+		LOGGER.info("initSecurity");
 		Security.setProperty("crypto.policy", "unlimited");
 		Security.addProvider(new BouncyCastleProvider());
 		secureRandomObj = new SecureRandom();
-		logger.info("initSecurity-end");
+		LOGGER.info("initSecurity-end");
 	}
 
 	public static Vector3f intercept(Vector3d shotOrigin, float shotSpeed, Vector3d targetOrigin, Vector3f targetVel,

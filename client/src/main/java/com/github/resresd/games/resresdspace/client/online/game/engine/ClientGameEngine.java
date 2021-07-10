@@ -371,7 +371,7 @@ public class ClientGameEngine {
 				if (enemyShip == null) {
 					return;
 				}
-				Vector3f targetOrigin = StaticData.usedForNarmal;
+				Vector3f targetOrigin = StaticData.getUsedForNarmal();
 				SpaceCamera camera = GameHeader.camera;
 
 				double enemyShipPosX = enemyShip.getPosition().x;
@@ -387,7 +387,7 @@ public class ClientGameEngine {
 				float posZ = (float) (enemyShipPosZ - cameraPositionZ);
 				targetOrigin.set(posX, posY, posZ);
 
-				tmp3.set(StaticData.usedForNarmal);
+				tmp3.set(StaticData.getUsedForNarmal());
 				viewMatrix.transformPosition(targetOrigin);
 				boolean backward = targetOrigin.z > 0.0F;
 				if (backward) {
@@ -486,7 +486,7 @@ public class ClientGameEngine {
 					targetOrigin.set(shipPosX, shipPosY, shipPosZ);
 
 					Vector3f interceptorDir = StaticData.intercept(camera.getPosition(), shotVelocity, targetOrigin,
-							tmp3.set(camera.linearVel).negate(), StaticData.usedForNarmal);
+							tmp3.set(camera.linearVel).negate(), StaticData.getUsedForNarmal());
 
 					if (interceptorDir == null) {
 						return;
@@ -544,14 +544,14 @@ public class ClientGameEngine {
 				float z = (float) (particlePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = (float) particleVelocity.w;
-					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
+					viewMatrix.transformPosition(StaticData.getUsedForNarmal().set(x, y, z));
 
-					float a = StaticData.usedForNarmal.x - particleSize;
-					float b = StaticData.usedForNarmal.y - particleSize;
-					float c = StaticData.usedForNarmal.x + particleSize;
-					float d = StaticData.usedForNarmal.y + particleSize;
+					float a = StaticData.getUsedForNarmal().x - particleSize;
+					float b = StaticData.getUsedForNarmal().y - particleSize;
+					float c = StaticData.getUsedForNarmal().x + particleSize;
+					float d = StaticData.getUsedForNarmal().y + particleSize;
 
-					float usfnZ = StaticData.usedForNarmal.z;
+					float usfnZ = StaticData.getUsedForNarmal().z;
 
 					particleVerticesFloatBuffer.put(a).put(b).put(usfnZ).put(w).put(-1).put(-1);
 					particleVerticesFloatBuffer.put(c).put(b).put(usfnZ).put(w).put(1).put(-1);
@@ -630,13 +630,13 @@ public class ClientGameEngine {
 				float z = (float) (projectilePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = projectileVelocity.w;
-					viewMatrix.transformPosition(StaticData.usedForNarmal.set(x, y, z));
+					viewMatrix.transformPosition(StaticData.getUsedForNarmal().set(x, y, z));
 
-					float a = StaticData.usedForNarmal.x - shotSize;
-					float b = StaticData.usedForNarmal.y - shotSize;
-					float c = StaticData.usedForNarmal.x + shotSize;
-					float d = StaticData.usedForNarmal.y + shotSize;
-					float ufnZ = StaticData.usedForNarmal.z;
+					float a = StaticData.getUsedForNarmal().x - shotSize;
+					float b = StaticData.getUsedForNarmal().y - shotSize;
+					float c = StaticData.getUsedForNarmal().x + shotSize;
+					float d = StaticData.getUsedForNarmal().y + shotSize;
+					float ufnZ = StaticData.getUsedForNarmal().z;
 
 					shotsVertices.put(a).put(b).put(ufnZ).put(w).put(-1).put(-1);
 					shotsVertices.put(c).put(b).put(ufnZ).put(w).put(1).put(-1);

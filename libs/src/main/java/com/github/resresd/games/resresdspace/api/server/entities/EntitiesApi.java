@@ -7,9 +7,12 @@ import com.github.resresd.games.resresdspace.StaticData;
 import com.github.resresd.games.resresdspace.api.server.network.NetWorkApi;
 import com.github.resresd.games.resresdspace.objects.space.entity.basic.SpaceEntity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class EntitiesApi {
 
-	public static UnaryOperator<CopyOnWriteArrayList<SpaceEntity>> entityList;
+	private static @Getter @Setter UnaryOperator<CopyOnWriteArrayList<SpaceEntity>> entityList;
 
 	public static void spawnEntity(SpaceEntity entity) {
 		while (entityList == null) {
@@ -23,7 +26,7 @@ public class EntitiesApi {
 			}
 		}
 		entityList.apply(null).add(entity);
-		if (NetWorkApi.broadCastFunction != null) {
+		if (NetWorkApi.getBroadCastFunction() != null) {
 			NetWorkApi.sendBroadCast(entity);
 		}
 	}

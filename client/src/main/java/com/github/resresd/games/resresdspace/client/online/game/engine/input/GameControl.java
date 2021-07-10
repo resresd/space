@@ -47,7 +47,7 @@ public class GameControl {
 		float rotationByZ = 0.0f;
 		if (GameHeader.getKeyDown()[GLFW_KEY_G]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor() * 1000,
-					GameHeader.camera.forward(StaticData.usedForNarmal));
+					GameHeader.camera.forward(StaticData.getUsedForNarmal()));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_W]) {
 			moveW();
@@ -93,11 +93,11 @@ public class GameControl {
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_SPACE]) {
 			GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.up(StaticData.usedForNarmal));
+					GameHeader.camera.up(StaticData.getUsedForNarmal()));
 		}
 		if (GameHeader.getKeyDown()[GLFW_KEY_LEFT_CONTROL]) {
 			GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
-					GameHeader.camera.up(StaticData.usedForNarmal));
+					GameHeader.camera.up(StaticData.getUsedForNarmal()));
 		}
 
 		if (GameHeader.getKeyDown()[GLFW_KEY_B]) {
@@ -130,22 +130,22 @@ public class GameControl {
 
 	private static void moveA() {
 		GameHeader.camera.linearAcc.fma(-GameHeader.getStraveThrusterAccFactor(),
-				GameHeader.camera.right(StaticData.usedForNarmal));
+				GameHeader.camera.right(StaticData.getUsedForNarmal()));
 	}
 
 	private static void moveD() {
 		GameHeader.camera.linearAcc.fma(GameHeader.getStraveThrusterAccFactor(),
-				GameHeader.camera.right(StaticData.usedForNarmal));
+				GameHeader.camera.right(StaticData.getUsedForNarmal()));
 	}
 
 	private static void moveS() {
 		GameHeader.camera.linearAcc.fma(-GameHeader.getMainThrusterAccFactor(),
-				GameHeader.camera.forward(StaticData.usedForNarmal));
+				GameHeader.camera.forward(StaticData.getUsedForNarmal()));
 	}
 
 	private static void moveW() {
 		GameHeader.camera.linearAcc.fma(GameHeader.getMainThrusterAccFactor(),
-				GameHeader.camera.forward(StaticData.usedForNarmal));
+				GameHeader.camera.forward(StaticData.getUsedForNarmal()));
 	}
 
 	public static void createCallbacks(long window) {
