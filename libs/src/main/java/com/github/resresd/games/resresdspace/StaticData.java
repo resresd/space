@@ -28,7 +28,7 @@ public class StaticData {
 
 	static Logger logger = LoggerFactory.getLogger(StaticData.class);
 
-	public static SecureRandom secureRandomObj;
+	private @Getter static SecureRandom secureRandomObj;
 
 	public static final ExceptionHandler EXCEPTION_HANDLER = new ExceptionHandler();
 

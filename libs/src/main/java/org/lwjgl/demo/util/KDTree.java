@@ -11,6 +11,9 @@ import java.util.List;
 
 import org.joml.Vector3f;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * A very nice and actually working KD-tree implementation taken from the
  * <a href=
@@ -88,14 +91,14 @@ public class KDTree {
 	}
 
 	public static class Ray {
-		public Vector3f org;
-		public Vector3f dir;
-		public float t;
-		public Object hit;
-		public float u;
-		public float v;
-		public Object inObject;
-		public Object rec;
+		private @Getter @Setter Vector3f org;
+		private @Getter @Setter Vector3f dir;
+		private @Getter @Setter float t;
+		private @Getter @Setter Object hit;
+		private @Getter @Setter float u;
+		private @Getter @Setter float v;
+		private @Getter @Setter Object inObject;
+		private @Getter @Setter Object rec;
 
 		public Ray() {
 			super();
@@ -107,7 +110,7 @@ public class KDTree {
 		}
 	}
 
-	private static float Vector3f_get(Vector3f v, int dim) {
+	private static float Vector3fGet(Vector3f v, int dim) {
 		switch (dim) {
 		case 0:
 			return v.x;
@@ -198,14 +201,15 @@ public class KDTree {
 	}
 
 	public static class Triangle {
-		public Vector3f v0;
-		public Vector3f v1;
-		public Vector3f v2;
-		public Box bounds;
+		private @Getter @Setter Vector3f v0;
+		private @Getter @Setter Vector3f v1;
+		private @Getter @Setter Vector3f v2;
+		private @Setter Box bounds;
 
 		public Box getBounds() {
-			if (bounds != null)
+			if (bounds != null) {
 				return bounds;
+			}
 			bounds = new Box();
 			bounds.min = new Vector3f(v0).min(v1).min(v2);
 			bounds.max = new Vector3f(v0).max(v1).max(v2);
@@ -312,13 +316,13 @@ public class KDTree {
 					 */
 					r = r.right;
 				} else {
-					if (r.splitPlane < Vector3f_get(boundingBox.min, r.splitAxis.dim)) {
+					if (r.splitPlane < Vector3fGet(boundingBox.min, r.splitAxis.dim)) {
 						/*
 						 * The split plane is below our AABB min point. So, choose the right/positive
 						 * child.
 						 */
 						r = r.right;
-					} else if (r.splitPlane > Vector3f_get(boundingBox.max, r.splitAxis.dim)) {
+					} else if (r.splitPlane > Vector3fGet(boundingBox.max, r.splitAxis.dim)) {
 						/*
 						 * The split plane is above our AABB max point. So, choose the left/negative
 						 * child.
@@ -436,12 +440,12 @@ public class KDTree {
 				Box box = node.triangles.get(i).getBounds();
 
 				// if Triangle lies completly on the right side
-				if (Vector3f_get(box.min, node.splitAxis.dim) >= node.splitPlane) {
+				if (Vector3fGet(box.min, node.splitAxis.dim) >= node.splitPlane) {
 					node.right.triangles.add(node.triangles.get(i));
 
 					// if Triangle lies completly on the left side
 				} else {
-					if (Vector3f_get(box.max, node.splitAxis.dim) <= node.splitPlane) {
+					if (Vector3fGet(box.max, node.splitAxis.dim) <= node.splitPlane) {
 						node.left.triangles.add(node.triangles.get(i));
 
 						// for the rest of cases we just put the Triangle in both subtrees
@@ -481,7 +485,7 @@ public class KDTree {
 			float avg = 0.0f;
 			for (int i = 0; i < node.triangles.size(); i++) {
 				Box bounds = node.triangles.get(i).getBounds();
-				avg += (Vector3f_get(bounds.min, node.splitAxis.dim) + Vector3f_get(bounds.max, node.splitAxis.dim))
+				avg += (Vector3fGet(bounds.min, node.splitAxis.dim) + Vector3fGet(bounds.max, node.splitAxis.dim))
 						* 0.5f;
 			}
 			avg /= node.triangles.size();
@@ -493,8 +497,8 @@ public class KDTree {
 			List<Float> vecIntervalMeans = new ArrayList<Float>(node.triangles.size());
 			for (int i = 0; i < node.triangles.size(); i++) {
 				Box bounds = node.triangles.get(i).getBounds();
-				vecIntervalMeans.add(Float.valueOf(0.5f * (Vector3f_get(bounds.min, node.splitAxis.dim)
-						+ Vector3f_get(bounds.max, node.splitAxis.dim))));
+				vecIntervalMeans.add(Float.valueOf(0.5f
+						* (Vector3fGet(bounds.min, node.splitAxis.dim) + Vector3fGet(bounds.max, node.splitAxis.dim))));
 			}
 			Collections.sort(vecIntervalMeans);
 			return vecIntervalMeans.get(vecIntervalMeans.size() / 2).floatValue();
@@ -511,7 +515,7 @@ public class KDTree {
 				// sampleing
 				Vector3f costvector = new Vector3f(bb.max).sub(bb.min);
 				int ax = Vector3f_maxDimension(costvector);
-				float box_width = Vector3f_get(bb.max, ax) - Vector3f_get(bb.min, ax);
+				float box_width = Vector3fGet(bb.max, ax) - Vector3fGet(bb.min, ax);
 				if (box_width <= EPSILON) {
 					node.splitAxis = Axis.NO_AXIS;
 					return Float.POSITIVE_INFINITY;
@@ -532,10 +536,10 @@ public class KDTree {
 				// build histogram
 				for (int i = 0; i < nPrims; i++) {
 					Box bounds = node.triangles.get(i).getBounds();
-					triangleLeftEdge = Math.min(Vector3f_get(bb.max, ax),
-							Math.max(Vector3f_get(bb.min, ax),
-									(Vector3f_get(bounds.min, ax) + Vector3f_get(bounds.max, ax)) * 0.5f))
-							- Vector3f_get(bb.min, ax);
+					triangleLeftEdge = Math.min(Vector3fGet(bb.max, ax),
+							Math.max(Vector3fGet(bb.min, ax),
+									(Vector3fGet(bounds.min, ax) + Vector3fGet(bounds.max, ax)) * 0.5f))
+							- Vector3fGet(bb.min, ax);
 					if (!bb.intersectsWithBox(bounds)) {
 						throw new IllegalStateException("!!! KDTree.findSplitPlane: no intersection of boxes!");
 					}
@@ -583,7 +587,7 @@ public class KDTree {
 					}
 				}
 
-				float splitPosition = ((minid + 1.0f) / mSahRes) * box_width + Vector3f_get(bb.min, ax);
+				float splitPosition = ((minid + 1.0f) / mSahRes) * box_width + Vector3fGet(bb.min, ax);
 
 				node.splitAxis = Axis.values()[ax];
 				return splitPosition;
@@ -591,7 +595,7 @@ public class KDTree {
 			// complete scan
 			Vector3f costvector = new Vector3f(bb.max).sub(bb.min);
 			int ax = Vector3f_maxDimension(costvector);
-			float box_width = Vector3f_get(costvector, ax);
+			float box_width = Vector3fGet(costvector, ax);
 
 			// only split if it makes sense
 			if (box_width <= EPSILON) {
@@ -612,8 +616,8 @@ public class KDTree {
 				if (!bb.intersectsWithBox(b)) {
 					throw new IllegalStateException("!!! KDTree.findSplitPlane: no intersection of boxes");
 				}
-				intervals.add(new IntervalBoundary(BoundaryType.LOWER_BOUND, Vector3f_get(b.min, ax)));
-				intervals.add(new IntervalBoundary(BoundaryType.UPPER_BOUND, Vector3f_get(b.max, ax)));
+				intervals.add(new IntervalBoundary(BoundaryType.LOWER_BOUND, Vector3fGet(b.min, ax)));
+				intervals.add(new IntervalBoundary(BoundaryType.UPPER_BOUND, Vector3fGet(b.max, ax)));
 			}
 
 			Collections.sort(intervals, new Comparator<IntervalBoundary>() {
@@ -635,7 +639,7 @@ public class KDTree {
 					open_intervals--;
 					done_intervals++;
 				}
-				alpha = (intervals.get(i).pos - Vector3f_get(bb.min, ax)) * inv_box_width;
+				alpha = (intervals.get(i).pos - Vector3fGet(bb.min, ax)) * inv_box_width;
 				float cost = mSahTrvCosts + mSahIntCosts
 						* ((done_intervals + open_intervals) * alpha + (nPrims - done_intervals) * (1.0f - alpha));
 				if (cost < mincost) {
@@ -649,7 +653,7 @@ public class KDTree {
 			float splitPlane = intervals.get(minid).pos;
 
 			// no cuts at the boundaries
-			if (splitPlane == Vector3f_get(bb.min, ax) || splitPlane == Vector3f_get(bb.max, ax)) {
+			if (splitPlane == Vector3fGet(bb.min, ax) || splitPlane == Vector3fGet(bb.max, ax)) {
 				node.splitAxis = Axis.NO_AXIS;
 				return Float.POSITIVE_INFINITY;
 			}

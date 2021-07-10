@@ -4,7 +4,12 @@
  */
 package org.lwjgl.demo.util;
 
-import static org.lwjgl.demo.util.GreedyMeshing.Face.*;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_NX;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_NY;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_NZ;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_PX;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_PY;
+import static org.lwjgl.demo.util.GreedyMeshing.Face.SIDE_PZ;
 
 import org.lwjgl.demo.util.GreedyMeshing.Face;
 
@@ -71,6 +76,9 @@ public class FaceTriangulator {
 				normals.putByte(0).putByte(0).putByte(127 * ((f.s << 1) - 9)).putByte(0);
 				normals.putByte(0).putByte(0).putByte(127 * ((f.s << 1) - 9)).putByte(0);
 				break;
+			default:
+				throw new UnsupportedOperationException("unsupported face:" + f.s);
+
 			}
 			if (isPositiveSide(f.s)) {
 				indices.putInt(i << 2).putInt((i << 2) + 1).putInt((i << 2) + 2);

@@ -17,7 +17,7 @@ public class Asteroid extends SpaceEntity {
 	}
 
 	public static float generateCoord(float size, float a, float b) {
-		return NumberUtils.randomFloatInRange(0F, a / b * size);
+		return NumberUtils.randomFloatInRange(0F, (float) ((double) a / (double) b * size));
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public class Asteroid extends SpaceEntity {
 	}
 
 	public void genHealth() {
-		setHealthMax((double) (getScale() * 50F));
+		setHealthMax((getScale() * 50D));
 		setHealth(getHealthMax());
 	}
 
