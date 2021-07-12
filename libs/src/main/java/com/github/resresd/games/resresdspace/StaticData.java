@@ -2,7 +2,6 @@ package com.github.resresd.games.resresdspace;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,26 +23,22 @@ import com.github.resresd.utils.ExceptionHandler;
 
 import lombok.Getter;
 
-public class StaticData {
+public final class StaticData {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(StaticData.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(StaticData.class.getSimpleName());
 
-	private @Getter static SecureRandom secureRandomObj;
+	private static @Getter SecureRandom secureRandomObj;
 
 	public static final ExceptionHandler EXCEPTION_HANDLER = new ExceptionHandler();
 
 	public static float shotVelocity = 150.0F;
 
-	public static int shotOpponentMilliseconds = 200;// ПЕРЕЗАРЯДКА У ДРУГИХ
+	public static int shotOpponentMilliseconds = 20;// ПЕРЕЗАРЯДКА У ДРУГИХ
+
 	public static int shipPositionVbo;
 
 	public static int shipNormalVbo;
 	public static Mesh sphereMesh;
-
-	/**
-	 * ИСПОЛЬЗУЕТСЯ В УПРАВЛЕНИИ ДЛЯ ПОВОРОТОВ
-	 */
-	private static final @Getter Vector3f usedForNarmal = new Vector3f();
 
 	private static final @Getter Vector3d tmpUsedForPossition = new Vector3d();
 
@@ -67,7 +62,7 @@ public class StaticData {
 		sphereMesh = loader.loadMesh("org/lwjgl/demo/game/sphere.obj.zip");
 	}
 
-	public static void initSecurity() throws NoSuchAlgorithmException {
+	public static void initSecurity() {
 		LOGGER.info("initSecurity");
 		Security.setProperty("crypto.policy", "unlimited");
 		Security.addProvider(new BouncyCastleProvider());

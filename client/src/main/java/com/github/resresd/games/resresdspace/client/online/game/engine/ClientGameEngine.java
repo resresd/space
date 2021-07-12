@@ -211,7 +211,7 @@ public class ClientGameEngine {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
 	private int shotProgram;
 	private int shot_projUniform;
@@ -371,7 +371,7 @@ public class ClientGameEngine {
 				if (enemyShip == null) {
 					return;
 				}
-				Vector3f targetOrigin = StaticData.getUsedForNarmal();
+				Vector3f targetOrigin = new Vector3f();
 				SpaceCamera camera = GameHeader.camera;
 
 				double enemyShipPosX = enemyShip.getPosition().x;
@@ -387,7 +387,7 @@ public class ClientGameEngine {
 				float posZ = (float) (enemyShipPosZ - cameraPositionZ);
 				targetOrigin.set(posX, posY, posZ);
 
-				tmp3.set(StaticData.getUsedForNarmal());
+				tmp3.set(targetOrigin);
 				viewMatrix.transformPosition(targetOrigin);
 				boolean backward = targetOrigin.z > 0.0F;
 				if (backward) {
@@ -485,8 +485,10 @@ public class ClientGameEngine {
 					Vector3d targetOrigin = tmp;
 					targetOrigin.set(shipPosX, shipPosY, shipPosZ);
 
+					Vector3f usedForNarmal = new Vector3f();
+
 					Vector3f interceptorDir = StaticData.intercept(camera.getPosition(), shotVelocity, targetOrigin,
-							tmp3.set(camera.linearVel).negate(), StaticData.getUsedForNarmal());
+							tmp3.set(camera.linearVel).negate(), usedForNarmal);
 
 					if (interceptorDir == null) {
 						return;
@@ -544,14 +546,17 @@ public class ClientGameEngine {
 				float z = (float) (particlePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = (float) particleVelocity.w;
-					viewMatrix.transformPosition(StaticData.getUsedForNarmal().set(x, y, z));
 
-					float a = StaticData.getUsedForNarmal().x - particleSize;
-					float b = StaticData.getUsedForNarmal().y - particleSize;
-					float c = StaticData.getUsedForNarmal().x + particleSize;
-					float d = StaticData.getUsedForNarmal().y + particleSize;
+					Vector3f usedForNarmal = new Vector3f();
 
-					float usfnZ = StaticData.getUsedForNarmal().z;
+					viewMatrix.transformPosition(usedForNarmal.set(x, y, z));
+
+					float a = usedForNarmal.x - particleSize;
+					float b = usedForNarmal.y - particleSize;
+					float c = usedForNarmal.x + particleSize;
+					float d = usedForNarmal.y + particleSize;
+
+					float usfnZ = usedForNarmal.z;
 
 					particleVerticesFloatBuffer.put(a).put(b).put(usfnZ).put(w).put(-1).put(-1);
 					particleVerticesFloatBuffer.put(c).put(b).put(usfnZ).put(w).put(1).put(-1);
@@ -630,13 +635,16 @@ public class ClientGameEngine {
 				float z = (float) (projectilePosition.z - camera.getPosition().z);
 				if (frustumIntersection.testPoint(x, y, z)) {
 					float w = projectileVelocity.w;
-					viewMatrix.transformPosition(StaticData.getUsedForNarmal().set(x, y, z));
 
-					float a = StaticData.getUsedForNarmal().x - shotSize;
-					float b = StaticData.getUsedForNarmal().y - shotSize;
-					float c = StaticData.getUsedForNarmal().x + shotSize;
-					float d = StaticData.getUsedForNarmal().y + shotSize;
-					float ufnZ = StaticData.getUsedForNarmal().z;
+					Vector3f usedForNarmal = new Vector3f();
+
+					viewMatrix.transformPosition(usedForNarmal.set(x, y, z));
+
+					float a = usedForNarmal.x - shotSize;
+					float b = usedForNarmal.y - shotSize;
+					float c = usedForNarmal.x + shotSize;
+					float d = usedForNarmal.y + shotSize;
+					float ufnZ = usedForNarmal.z;
 
 					shotsVertices.put(a).put(b).put(ufnZ).put(w).put(-1).put(-1);
 					shotsVertices.put(c).put(b).put(ufnZ).put(w).put(1).put(-1);
@@ -746,7 +754,7 @@ public class ClientGameEngine {
 	}
 
 	private void init() throws IOException {
-		logger.info("init-start");
+		LOGGER.info("init-start");
 
 		if (!glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -808,20 +816,21 @@ public class ClientGameEngine {
 		/* Create all needed GL resources */
 		createCubemapTexture();
 		createFullScreenQuad();
-		createCubemapProgram();
 
+		createCubemapProgram();
+		createShotProgram();
 		createShipProgram();
-		createShip();
+
 		createParticleProgram();
 
+		createShip();
 		createAsteroid();
-		createShotProgram();
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		logger.info("init-menu-start");
+		LOGGER.info("init-menu-start");
 
 		//
 		int h = WindowHeader.getHeight();
@@ -840,15 +849,15 @@ public class ClientGameEngine {
 
 		//
 		menu.getLayoutsHashMap().put(0, layout);
-		logger.info("init-menu-end");
+		LOGGER.info("init-menu-end");
 
-		logger.info("init-end");
+		LOGGER.info("init-end");
 	}
 
 	public void initConfig() throws IOException, NoSuchAlgorithmException {
-		logger.info("initConfig-start");
+		LOGGER.info("initConfig-start");
 		ConfigUtils.initConfig();
-		logger.info("initConfig-end");
+		LOGGER.info("initConfig-end");
 	}
 
 	public void initData() throws IOException {
@@ -856,7 +865,7 @@ public class ClientGameEngine {
 	}
 
 	private void loop() {
-		logger.info("loop-start");
+		LOGGER.info("loop-start");
 		ClientGameEngine.active = true;
 		while (!glfwWindowShouldClose(WindowHeader.getWindow())) {
 			glfwPollEvents();
@@ -866,7 +875,7 @@ public class ClientGameEngine {
 			glfwSwapBuffers(WindowHeader.getWindow());
 		}
 		ClientGameEngine.active = false;
-		logger.info("loop-end");
+		LOGGER.info("loop-end");
 	}
 
 	private void render() {
@@ -922,7 +931,7 @@ public class ClientGameEngine {
 	}
 
 	public void startGame() {
-		logger.info("startGame-start");
+		LOGGER.info("startGame-start");
 
 		try {
 
@@ -942,7 +951,7 @@ public class ClientGameEngine {
 		} finally {
 			glfwTerminate();
 		}
-		logger.info("startGame-end");
+		LOGGER.info("startGame-end");
 	}
 
 	private void update() {

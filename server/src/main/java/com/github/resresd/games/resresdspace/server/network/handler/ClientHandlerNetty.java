@@ -81,7 +81,7 @@ public class ClientHandlerNetty extends ChannelInboundHandlerAdapter {
 				LOGGER.info("TODO Send last pos for {}", player);
 				LOGGER.info("TODO Send Relation for {}", player);
 
-				ServerEngine.getSPACE_ENTITIES().parallelStream().forEachOrdered(entity -> ctx.writeAndFlush(entity));
+				ServerEngine.getSPACE_ENTITIES().stream().forEachOrdered(entity -> ctx.writeAndFlush(entity));
 			}).start();
 		}
 

@@ -204,12 +204,13 @@ public class ServerEngine extends Thread {
 			// getRadius
 			float shipRadius = targetShip.getScale();
 
+			Vector3f usedForNarmal = new Vector3f();
+
 			Vector3d shotPos = StaticData.getTmpUsedForPossition()
 					.set(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z).sub(position).negate()
 					.normalize().mul(1.01F * shipRadius)
 					.add(ship.getPosition().x, ship.getPosition().y, ship.getPosition().z);
-			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel,
-					StaticData.getUsedForNarmal());
+			Vector3f icept = StaticData.intercept(shotPos, StaticData.shotVelocity, position, linearVel, usedForNarmal);
 
 			if (icept == null) {
 				return;
@@ -225,9 +226,9 @@ public class ServerEngine extends Thread {
 			Vector4f projectileVelocity = newShot.getProjectileVelocity();
 			if (projectileVelocity.w <= 0.0F) {
 				projectilePosition.set(shotPos);
-				projectileVelocity.x = StaticData.getUsedForNarmal().x * StaticData.shotVelocity;
-				projectileVelocity.y = StaticData.getUsedForNarmal().y * StaticData.shotVelocity;
-				projectileVelocity.z = StaticData.getUsedForNarmal().z * StaticData.shotVelocity;
+				projectileVelocity.x = usedForNarmal.x * StaticData.shotVelocity;
+				projectileVelocity.y = usedForNarmal.y * StaticData.shotVelocity;
+				projectileVelocity.z = usedForNarmal.z * StaticData.shotVelocity;
 				projectileVelocity.w = 0.01F;
 			}
 			NetWorkHeader.sendBroadcastNetty(newShot);
@@ -296,9 +297,11 @@ public class ServerEngine extends Thread {
 
 				float scale = spaceEntity.getScale();
 
+				Vector3f usedForNarmal = new Vector3f();
+
 				if (broadphase(posX, posY, posZ, boundingSphereRadius, scale, projectilePosition, newPosition)
 						&& narrowphase(meshPos, posX, posY, posZ, scale, projectilePosition, newPosition,
-								StaticData.getTmpUsedForPossition(), StaticData.getUsedForNarmal())) {
+								StaticData.getTmpUsedForPossition(), usedForNarmal)) {
 
 					if (spaceEntity.damage(damage)) {
 						SPACE_ENTITIES.remove(spaceEntity);
@@ -315,7 +318,7 @@ public class ServerEngine extends Thread {
 					}
 					EmitExplosionPacket emitExplosionPacket = new EmitExplosionPacket();
 					emitExplosionPacket.setPosition(StaticData.getTmpUsedForPossition());
-					emitExplosionPacket.setNormal(StaticData.getUsedForNarmal());
+					emitExplosionPacket.setNormal(usedForNarmal);
 					NetWorkHeader.sendBroadcastNetty(emitExplosionPacket);
 
 					projectileVelocity.w = 0.0F;

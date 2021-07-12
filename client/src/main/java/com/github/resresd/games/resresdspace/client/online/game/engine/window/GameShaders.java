@@ -58,12 +58,8 @@ public class GameShaders {
 	public static Matrix4f viewMatrix = new Matrix4f();// CAMERA
 	public static Matrix4f modelMatrix = new Matrix4f();// WORLD ?
 
-	@Getter
-	@Setter
-	public static int cubemapProgram;
-	@Getter
-	@Setter
-	public static int cubemap_invViewProjUniform;
+	public static @Getter @Setter int cubemapProgram;
+	public static @Getter @Setter int cubemap_invViewProjUniform;
 
 	public static void drawCubemap() {
 		glUseProgram(GameShaders.getCubemapProgram());
@@ -100,7 +96,7 @@ public class GameShaders {
 			float y = (float) (spaceEntity.getPosition().y - GameHeader.camera.getPosition().y);
 			float z = (float) (spaceEntity.getPosition().z - GameHeader.camera.getPosition().z);
 			if (frustumIntersection.testSphere(x, y, z, spaceEntity.getScale())) {
-				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(spaceEntity.getClass());
+				Mesh asteroidMesh = StaticData.getMESHS_MAP().get(Asteroid.class);
 
 				modelMatrix.translation(x, y, z);
 				modelMatrix.scale(spaceEntity.getScale());
